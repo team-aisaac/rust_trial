@@ -9,7 +9,7 @@ fn main() -> std::io::Result<()> {
     
     let multicast_addr_vision_data = "224.5.23.2".to_string();
     let multicast_port_vision_data = 10006;
-    let multicast_endpoint_vision_data = multicast_addr_vision_data.clone() + &multicast_port_vision_data.to_string();
+    let multicast_endpoint_vision_data = "0.0.0.0:".to_string() + &multicast_port_vision_data.to_string();
 
     println!("{}", &multicast_endpoint_vision_data);
 
