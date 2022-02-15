@@ -3,6 +3,12 @@ use std::thread;
 use std::str::FromStr;
 use std::net::Ipv4Addr;
 
+use protobuf::Message;
+mod messages_robocup_ssl_detection;
+mod messages_robocup_ssl_geometry;
+mod messages_robocup_ssl_wrapper;
+use messages_robocup_ssl_wrapper::SSL_WrapperPacket;
+
 fn main() -> std::io::Result<()> {
     println!("Hello, world!");
     // https://qiita.com/psyashes/items/8791a70ef0058c173196
@@ -16,6 +22,7 @@ fn main() -> std::io::Result<()> {
     let socket = UdpSocket::bind(&multicast_endpoint_vision_data).expect("couldn't bind to address");
     let mut buf = [0; 2048];
 
+    // Join multicast group
     socket.join_multicast_v4(
         &Ipv4Addr::from_str(&multicast_addr_vision_data).expect("couldn't generate address from str"),
         &Ipv4Addr::UNSPECIFIED
@@ -27,7 +34,10 @@ fn main() -> std::io::Result<()> {
                 thread::spawn(move || {
                     let _buf = &mut buf[..buf_size];
                     // https://doc.rust-lang.org/std/net/struct.UdpSocket.html
-                    // ToDo: Message processing
+                    // https://github.com/stepancheg/rust-protobuf/blob/master/protobuf-examples/pure-vs-protoc/src/main.rs
+                    // Message protobuf deserialize
+                    let mut _packet = SSL_WrapperPacket::new();
+                    _packet.merge_from_bytes(_buf).expect("couldn't deserialize protobuf.");
                 });
             },
             Err(e) => {
@@ -36,10 +46,11 @@ fn main() -> std::io::Result<()> {
         }
     }
     
-    socket.leave_multicast_v4(
-        &Ipv4Addr::from_str(&multicast_addr_vision_data).expect("couldn't generate address from str"),
-        &Ipv4Addr::UNSPECIFIED
-    ).expect("couldn't leave from multicast group");
+    // Leave multicast group
+    // socket.leave_multicast_v4(
+    //     &Ipv4Addr::from_str(&multicast_addr_vision_data).expect("couldn't generate address from str"),
+    //     &Ipv4Addr::UNSPECIFIED
+    // ).expect("couldn't leave from multicast group");
 
-    Ok(())
+    // Ok(())
 }

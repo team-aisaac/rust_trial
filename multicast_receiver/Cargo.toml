@@ -10,4 +10,4 @@ build = "build.rs"
 protobuf-codegen-pure = "2"
 
 [dependencies]
-# protobuf = "2.27.1"
+protobuf = "2.27.1"
