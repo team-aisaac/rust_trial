@@ -11,9 +11,10 @@ r2rを試してみる。
    - in Ubuntu: `sudo apt install libclang-dev`
 
 ```
-. /opt/ros/foxy/setup.sh
+. ~/ros2_foxy/ros2-linux/setup.bash
 cargo build
 cargo run --example subscriber
 # In other shell
 ros2 topic pub /topic std_msgs/msg/String "data: 'Hello, world'"
 ```
+Change path to setup.bash https://docs.ros.org/en/foxy/Installation/Ubuntu-Install-Binary.html
