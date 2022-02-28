@@ -5,7 +5,52 @@ use std::path::Path;
 use std::env;
 
 use rppal::uart::{Parity, Uart};
-// use std::convert::{From, Into};
+use std::convert::{From, TryFrom};
+
+struct AisaacCommand {
+    use_sensor: u8,
+    kick_type: bool,
+    kick_strength: u8
+}
+
+// #[derive(PartialEq, Eq, Debug)]
+struct AisaacFT4 {
+    data_type: u8,
+    x_vector: i16,
+    y_vector: i16,
+    angle_type_select: bool,
+    angle: u16,
+    calibration_valid_flag: bool,
+    calibratiob_x_pos: u16,
+    calibration_y_pos: u16,
+    calibration_angle: u16,
+    command: AisaacCommand,
+    misc_byte: u8
+}
+
+impl From<AisaacFT4> for [u8; 13] {
+    fn from(x: AisaacFT4) -> Self {
+        let ux_vec: u16 = TryFrom::try_from(x.x_vector).unwrap();
+        let b0: u8 = ((x.data_type & 0x7) << 5) as u8 | if x.x_vector >= 0 {0u8} else {0b10000u8} | ((ux_vec >> 11) & 0b1111) as u8;
+        let b1: u8 = ((ux_vec >> 3) & 0xFF) as u8;
+        let uy_vec: u16 = TryFrom::try_from(x.y_vector).unwrap();
+        let b2: u8 = ((ux_vec & 0b111) << 5) as u8 | if x.y_vector >= 0 {0u8} else {0b10000u8} | ((uy_vec >> 11) &0b1111) as u8;
+        let b3: u8 = ((uy_vec >> 3) & 0xFF) as u8;
+        let b4: u8 = ((uy_vec & 0b111) << 5) as u8 | (((x.angle_type_select as u8) << 4) & 0b10000u8) | ((x.angle >> 8) & 0b1111) as u8;
+        let b5: u8 = (x.angle & 0xFF) as u8;
+        let b6: u8 = ((x.calibration_valid_flag as u8) << 7) | ((x.calibratiob_x_pos >> 7) & 0x7F) as u8;
+        let b7: u8 = ((x.calibratiob_x_pos & 0xFE) << 1) as u8 | ((x.calibration_y_pos >> 13) & 0b1) as u8;
+        let b8: u8 = ((x.calibration_y_pos >> 5) & 0xFF) as u8;
+        let b9: u8 = ((x.calibration_y_pos & 0x1F) << 3) as u8 | ((x.calibration_angle >> 9) & 0b111) as u8;
+        let b10: u8 = ((x.calibration_angle >> 1) & 0xFF) as u8;
+        let b11: u8 = ((x.calibration_angle & 0b1) << 7) as u8 | ((x.command.use_sensor & 0b111) << 4) as u8 | (((x.command.kick_type as u8) & 0b1) << 3) | (x.command.kick_strength & 0b111) as u8;
+        let b12: u8 = x.misc_byte;
+        {
+            [b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12]
+        }
+    }
+}
+
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("Hello, world!");
@@ -24,55 +69,44 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    // uart.set_read_mode(1, Duration::default())?;
-    // let mut buffer = [0u8; 1];
+    let acm = AisaacCommand { use_sensor: 2, kick_type: true, kick_strength: 1};    
+    let aft4 = AisaacFT4 {
+        data_type: 4,
+        x_vector: 1,
+        y_vector: 100,
+        angle_type_select: true,
+        angle: 30,
+        calibration_valid_flag: true,
+        calibratiob_x_pos: 10,
+        calibration_y_pos: 10,
+        calibration_angle: 200,
+        command: acm,
+        misc_byte: 0};
+    // let test_buf = <[u8; 13]>::From(aft4);
+    let test_buf: [u8; 13] = aft4.into();
+    for x in test_buf {
+        print!("{:x}", x);
+    }
+    println!("");
+
+
     let mut reference_time = Instant::now();
-    let buffer: [u8; 4] = ['t' as u8, 'e' as u8, 's' as u8, 't' as u8];
+    // let buffer: [u8; 4] = ['t' as u8, 'e' as u8, 's' as u8, 't' as u8];
     loop {
         // Rx
         let mut rx_buffer = [0u8; 1];
         if uart.read(&mut rx_buffer).expect("couldn't receive from uart") > 0 {
             if hex_mode {
-                println!("{:X} ", rx_buffer[0]);
+                print!("{:X} ", rx_buffer[0]);
             } else {
-                println!("{}", rx_buffer[0] as char);
+                print!("{}", rx_buffer[0] as char);
             }
         }
 
         if reference_time.elapsed() > Duration::from_millis(1000) {
             reference_time = Instant::now();
-            uart.write(&buffer).expect("couldn't send uart");
+            uart.write(&test_buf).expect("couldn't send uart");
         }
         // thread::sleep(Duration::from_millis(1000)); // wait 1s
     }
 }
-
-// struct AisaacCommand {
-//     UseSensor: u8,
-//     KickType: bool,
-//     KickStrength: u8
-// }
-
-// #[derive(PartialEq, Eq, Debug)]
-// struct AisaacFT4 {
-//     DataType: u8,
-//     XVector: i16,
-//     YVector: i16,
-//     TOFlag: bool,
-//     Angle: u16,
-//     CalibValidFlag: bool,
-//     CalibXPos: u16,
-//     CalibYPos: u16,
-//     Command: AisaacCommand,
-//     MiscByte: u8
-// }
-
-// impl From<Color> for [8u; 13] {
-//     fn from(x: AisaacFT4) -> Self {
-//         let b0: u8 = ((x.DataType & 0x7) << 5) as u8 | ((x.XVector >> ))
-
-//         [8u; 13] {
-
-//         }
-//     }
-// }
