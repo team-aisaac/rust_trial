@@ -111,10 +111,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     escaped_buf.push(13);
     let mut check_sum = 0;
     for x in test_buf {
-        check_sum = (check_sum + x) & 0xFFu8;
+        check_sum = (check_sum as u16 + x as u16) as u8;
         escape_for_serial(x, &mut escaped_buf);
     }
     escape_for_serial(check_sum, &mut escaped_buf);
+    for x in escaped_buf {
+        print!("{:x}", x);
+    }
+    println!("");
 
 
     let mut reference_time = Instant::now();
