@@ -51,6 +51,24 @@ impl From<AisaacFT4> for [u8; 13] {
     }
 }
 
+fn escape_for_serial(input: u8, out: &mut Vec<u8>) {
+    if input == 0x11 {
+        out.push(0x7Du8);
+        out.push(0x31u8);
+    } else if input == 0x13 {
+        out.push(0x7Du8);
+        out.push(0x33u8);
+    } else if input == 0x7D {
+        out.push(0x7Du8);
+        out.push(0x5Du8);
+    } else if input == 0x7E {
+        out.push(0x7Du8);
+        out.push(0x5Eu8);
+    } else {
+        out.push(input);
+    }
+}
+
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("Hello, world!");
@@ -88,6 +106,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         print!("{:x}", x);
     }
     println!("");
+
+    let mut escaped_buf: Vec<u8> = vec![0x7Eu8];
+    escaped_buf.push(13);
+    let mut check_sum = 0;
+    for x in test_buf {
+        check_sum = (check_sum + x) & 0xFFu8;
+        escape_for_serial(x, &mut escaped_buf);
+    }
+    escape_for_serial(check_sum, &mut escaped_buf);
 
 
     let mut reference_time = Instant::now();
