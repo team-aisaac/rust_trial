@@ -114,11 +114,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         check_sum = (check_sum as u16 + x as u16) as u8;
         escape_for_serial(x, &mut escaped_buf);
     }
-    escape_for_serial(0xFFu8 - check_sum, &mut escaped_buf);
-    for x in escaped_buf {
-        print!("{:x}", x);
-    }
-    println!("");
+    check_sum = 0xFFu8 - check_sum;
+    escape_for_serial(check_sum, &mut escaped_buf);
+    // for x in escaped_buf {
+    //     print!("{:x}", x);
+    // }
+    // println!("");
 
 
     let mut reference_time = Instant::now();
@@ -136,7 +137,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         if reference_time.elapsed() > Duration::from_millis(1000) {
             reference_time = Instant::now();
-            uart.write(&test_buf).expect("couldn't send uart");
+            uart.write(&escaped_buf).expect("couldn't send uart");
         }
         // thread::sleep(Duration::from_millis(1000)); // wait 1s
     }
