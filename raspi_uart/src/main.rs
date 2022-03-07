@@ -114,7 +114,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         check_sum = (check_sum as u16 + x as u16) as u8;
         escape_for_serial(x, &mut escaped_buf);
     }
-    escape_for_serial(check_sum, &mut escaped_buf);
+    escape_for_serial(0xFFu8 - check_sum, &mut escaped_buf);
     for x in escaped_buf {
         print!("{:x}", x);
     }
