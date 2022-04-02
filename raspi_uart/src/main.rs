@@ -90,10 +90,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let acm = AisaacCommand { use_sensor: 2, kick_type: true, kick_strength: 1};    
     let aft4 = AisaacFT4 {
         data_type: 4,
-        x_vector: 1,
-        y_vector: 100,
+        x_vector: 1700,
+        y_vector: 0,
         angle_type_select: true,
-        angle: 30,
+        angle: 0,
         calibration_valid_flag: true,
         calibratiob_x_pos: 10,
         calibration_y_pos: 10,
