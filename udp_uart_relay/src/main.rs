@@ -14,7 +14,7 @@ fn main() -> std::io::Result<()> {
     socket.set_nonblocking(true).unwrap();
     let mut buf = [0; 2048];
     // UART
-    let serial_device_path = Path::new("/dev/ttyAMA2");   // Use uart2
+    let serial_device_path = Path::new("/dev/ttyAMA1");   // Use uart2
     let mut uart = Uart::with_path(serial_device_path, 115_200, Parity::None, 8, 1).unwrap();
 
     // args
