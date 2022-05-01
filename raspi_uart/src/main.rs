@@ -16,13 +16,14 @@ struct AisaacCommand {
 // #[derive(PartialEq, Eq, Debug)]
 struct AisaacFT4 {
     data_type: u8,
+    robot_command_coordinate_system_type: u8,
     x_vector: i16,
     y_vector: i16,
     angle_type_select: bool,
     angle: u16,
     calibration_valid_flag: bool,
-    calibratiob_x_pos: u16,
-    calibration_y_pos: u16,
+    calibratiob_x_pos: i16,
+    calibration_y_pos: i16,
     calibration_angle: u16,
     command: AisaacCommand,
     misc_byte: u8
@@ -31,10 +32,10 @@ struct AisaacFT4 {
 impl From<AisaacFT4> for [u8; 13] {
     fn from(x: AisaacFT4) -> Self {
         let ux_vec: u16 = TryFrom::try_from(x.x_vector).unwrap();
-        let b0: u8 = ((x.data_type & 0x7) << 5) as u8 | if x.x_vector >= 0 {0u8} else {0b10000u8} | ((ux_vec >> 11) & 0b1111) as u8;
-        let b1: u8 = ((ux_vec >> 3) & 0xFF) as u8;
+        let b0: u8 = ((x.data_type & 0x7) << 5) as u8 | ((x.robot_command_coordinate_system_type & 0b11) << 3) as u8 | if x.x_vector >= 0 {0u8} else {0b100u8} | ((ux_vec >> 12) & 0b11) as u8;
+        let b1: u8 = ((ux_vec >> 4) & 0xFF) as u8;
         let uy_vec: u16 = TryFrom::try_from(x.y_vector).unwrap();
-        let b2: u8 = ((ux_vec & 0b111) << 5) as u8 | if x.y_vector >= 0 {0u8} else {0b10000u8} | ((uy_vec >> 11) &0b1111) as u8;
+        let b2: u8 = ((ux_vec & 0b1111) << 4) as u8 | if x.y_vector >= 0 {0u8} else {0b1000u8} | ((uy_vec >> 11) &0b111) as u8;
         let b3: u8 = ((uy_vec >> 3) & 0xFF) as u8;
         let b4: u8 = ((uy_vec & 0b111) << 5) as u8 | (((x.angle_type_select as u8) << 4) & 0b10000u8) | ((x.angle >> 8) & 0b1111) as u8;
         let b5: u8 = (x.angle & 0xFF) as u8;
@@ -90,6 +91,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let acm = AisaacCommand { use_sensor: 2, kick_type: true, kick_strength: 1};    
     let aft4 = AisaacFT4 {
         data_type: 4,
+        robot_command_coordinate_system_type: 0,
         x_vector: 1700,
         y_vector: 0,
         angle_type_select: true,
