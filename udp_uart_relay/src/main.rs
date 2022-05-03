@@ -3,6 +3,7 @@ use std::net::UdpSocket;
 // use std::str;
 use std::path::Path;
 use std::env;
+use std::io;
 
 use rppal::uart::{Parity, Uart};
 
@@ -10,7 +11,7 @@ fn main() -> std::io::Result<()> {
     println!("UDP UART Relay");
     println!("Waiting at port 11312");
     // UDP
-    let socket = UdpSocket::bind("127.0.0.1:11312")?;
+    let socket = UdpSocket::bind("0.0.0.0:11312")?; // INADDR_ANY
     socket.set_nonblocking(true).unwrap();
     let mut buf = [0; 2048];
     // UART
@@ -40,11 +41,12 @@ fn main() -> std::io::Result<()> {
                 //     println!("request message: {:?}", req_msg);
                 // });
                 println!("src address: {:?}", src_addr);
-                let buf = &mut buf[..buf_size];
+                let buf = &mut buf[4..buf_size];
                 uart.write(&buf).expect("couldn't send uart");
             },
+            Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {},
             Err(e) => {
-                println!("couldn't receive uart message: {:?}", e);
+                println!("couldn't receive UDP message: {:?}", e);
             }
         }
 
