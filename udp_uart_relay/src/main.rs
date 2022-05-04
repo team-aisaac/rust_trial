@@ -7,6 +7,24 @@ use std::io;
 
 use rppal::uart::{Parity, Uart};
 
+fn escape_for_serial(input: u8, out: &mut Vec<u8>) {
+    if input == 0x11 {
+        out.push(0x7Du8);
+        out.push(0x31u8);
+    } else if input == 0x13 {
+        out.push(0x7Du8);
+        out.push(0x33u8);
+    } else if input == 0x7D {
+        out.push(0x7Du8);
+        out.push(0x5Du8);
+    } else if input == 0x7E {
+        out.push(0x7Du8);
+        out.push(0x5Eu8);
+    } else {
+        out.push(input);
+    }
+}
+
 fn main() -> std::io::Result<()> {
     println!("UDP UART Relay");
     println!("Waiting at port 11312");
@@ -41,8 +59,19 @@ fn main() -> std::io::Result<()> {
                 //     println!("request message: {:?}", req_msg);
                 // });
                 println!("src address: {:?}", src_addr);
-                let buf = &mut buf[4..buf_size];
-                uart.write(&buf).expect("couldn't send uart");
+                let buf2 = &mut buf[4..buf_size];
+
+                let mut escaped_buf: Vec<u8> = vec![0x7Eu8];
+                escaped_buf.push(13);
+                let mut check_sum = 0;
+                for x in buf2 {
+                    check_sum = (check_sum as u16 + *x as u16) as u8;
+                    escape_for_serial(*x, &mut escaped_buf);
+                }
+                check_sum = 0xFFu8 - check_sum;
+                escape_for_serial(check_sum, &mut escaped_buf);
+
+                uart.write(&escaped_buf).expect("couldn't send uart");
             },
             Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {},
             Err(e) => {
