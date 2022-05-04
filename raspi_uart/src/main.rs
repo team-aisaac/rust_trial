@@ -30,21 +30,21 @@ struct AisaacFT4 {
 
 impl From<AisaacFT4> for [u8; 13] {
     fn from(x: AisaacFT4) -> Self {
-        let utarget_x: u16 = TryFrom::try_from(x.target_x).unwrap();
+        let utarget_x: u16 = TryFrom::try_from(x.target_x.abs()).unwrap();
         let b0: u8 = ((x.data_type & 0x7) << 5) as u8 | ((x.robot_command_coordinate_system_type & 0b11) << 3) as u8 | if x.x_vector >= 0 {0u8} else {0b100u8} | ((utarget_x >> 11) & 0b11) as u8;
         let b1: u8 = ((utarget_x >> 3) & 0xFF) as u8;
-        let utarget_y: u16 = TryFrom::try_from(x.target_y).unwrap();
+        let utarget_y: u16 = TryFrom::try_from(x.target_y.abs()).unwrap();
         let b2: u8 = ((utarget_x & 0b111) << 5) as u8 | if x.target_y >= 0 {0u8} else {0b10000u8} | ((utarget_y >> 9) &0b1111) as u8;
         let b3: u8 = ((utarget_y >> 1) & 0xFF) as u8;
-        let utarget_angle: u16 = TryFrom::try_from(x.target_angle).unwrap();
+        let utarget_angle: u16 = TryFrom::try_from(x.target_angle.abs()).unwrap();
         let b4: u8 = ((utarget_y & 0b1) << 7) as u8 | if x.target_angle >= 0 {0u8} else {0b1000000u8} | ((utarget_angle >> 8) & 0b1111) as u8;
         let b5: u8 = (utarget_angle & 0xFF) as u8;
-        let ucurrent_x: u16 = TryFrom::try_from(x.current_x).unwrap();
+        let ucurrent_x: u16 = TryFrom::try_from(x.current_x.abs()).unwrap();
         let b6: u8 = ((x.vision_data_valid as u8) << 7) | if x.current_x >= 0 {0u8} else {0b1000000u8} | ((ucurrent_x >> 7) & 0b111111) as u8;
         let b7: u8 = ((ucurrent_x & 0b1111111) << 1) as u8 | if x.current_y >= {0u8} else {0b100u8};
-        let ucurrent_y: u16 = TryFrom::try_from(x.current_y).unwrap();
+        let ucurrent_y: u16 = TryFrom::try_from(x.current_y.abs()).unwrap();
         let b8: u8 = ((ucurrent_y >> 5) & 0xFF) as u8;
-        let ucurrent_angle: u16 = TryFrom::try_from(x.current_angle).unwrap();
+        let ucurrent_angle: u16 = TryFrom::try_from(x.current_angle.abs()).unwrap();
         let b9: u8 = ((ucurrent_y & 0x1F) << 3) as u8 | if x.current_angle >= 0 {0} else {0b100u8} | ((ucurrent_angle >> 9) & 0b11) as u8;
         let b10: u8 = ((ucurrent_angle >> 1) & 0xFF) as u8;
         let b11: u8 = ((ucurrent_angle & 0b1) << 7) as u8 | ((x.command.use_sensor & 0b111) << 4) as u8 | (((x.command.kick_type as u8) & 0b1) << 3) | (x.command.kick_strength & 0b111) as u8;
