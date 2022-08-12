@@ -61,15 +61,15 @@ fn main() -> std::io::Result<()> {
                 println!("src address: {:?}", src_addr);
                 let buf2 = &mut buf[4..buf_size];
 
-                let mut escaped_buf: Vec<u8> = vec![0x7Eu8];
-                escaped_buf.push(13);
+                let mut escaped_buf: Vec<u8> = vec![0x7Eu8];        // Start delimiter
+                escape_for_serial(buf_size-4, &mut escaped_buf);    // Length
                 let mut check_sum = 0;
                 for x in buf2 {
                     check_sum = (check_sum as u16 + *x as u16) as u8;
                     escape_for_serial(*x, &mut escaped_buf);
                 }
                 check_sum = 0xFFu8 - check_sum;
-                escape_for_serial(check_sum, &mut escaped_buf);
+                escape_for_serial(check_sum, &mut escaped_buf);     // Checksum
 
                 uart.write(&escaped_buf).expect("couldn't send uart");
             },
