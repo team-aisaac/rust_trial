@@ -16,34 +16,38 @@ struct AisaacCommand {
 // #[derive(PartialEq, Eq, Debug)]
 struct AisaacFT4 {
     data_type: u8,
-    x_vector: i16,
-    y_vector: i16,
-    angle_type_select: bool,
-    angle: u16,
-    calibration_valid_flag: bool,
-    calibratiob_x_pos: u16,
-    calibration_y_pos: u16,
-    calibration_angle: u16,
+    robot_command_coordinate_system_type: u8,
+    target_x: i16,
+    target_y: i16,
+    target_angle: i16,
+    vision_data_valid: bool,
+    current_x: i16,
+    current_y: i16,
+    current_angle: i16,
     command: AisaacCommand,
     misc_byte: u8
 }
 
 impl From<AisaacFT4> for [u8; 13] {
     fn from(x: AisaacFT4) -> Self {
-        let ux_vec: u16 = TryFrom::try_from(x.x_vector).unwrap();
-        let b0: u8 = ((x.data_type & 0x7) << 5) as u8 | if x.x_vector >= 0 {0u8} else {0b10000u8} | ((ux_vec >> 11) & 0b1111) as u8;
-        let b1: u8 = ((ux_vec >> 3) & 0xFF) as u8;
-        let uy_vec: u16 = TryFrom::try_from(x.y_vector).unwrap();
-        let b2: u8 = ((ux_vec & 0b111) << 5) as u8 | if x.y_vector >= 0 {0u8} else {0b10000u8} | ((uy_vec >> 11) &0b1111) as u8;
-        let b3: u8 = ((uy_vec >> 3) & 0xFF) as u8;
-        let b4: u8 = ((uy_vec & 0b111) << 5) as u8 | (((x.angle_type_select as u8) << 4) & 0b10000u8) | ((x.angle >> 8) & 0b1111) as u8;
-        let b5: u8 = (x.angle & 0xFF) as u8;
-        let b6: u8 = ((x.calibration_valid_flag as u8) << 7) | ((x.calibratiob_x_pos >> 7) & 0x7F) as u8;
-        let b7: u8 = ((x.calibratiob_x_pos & 0xFE) << 1) as u8 | ((x.calibration_y_pos >> 13) & 0b1) as u8;
-        let b8: u8 = ((x.calibration_y_pos >> 5) & 0xFF) as u8;
-        let b9: u8 = ((x.calibration_y_pos & 0x1F) << 3) as u8 | ((x.calibration_angle >> 9) & 0b111) as u8;
-        let b10: u8 = ((x.calibration_angle >> 1) & 0xFF) as u8;
-        let b11: u8 = ((x.calibration_angle & 0b1) << 7) as u8 | ((x.command.use_sensor & 0b111) << 4) as u8 | (((x.command.kick_type as u8) & 0b1) << 3) | (x.command.kick_strength & 0b111) as u8;
+        let utarget_x: u16 = TryFrom::try_from(x.target_x.abs()).unwrap();
+        let b0: u8 = ((x.data_type & 0x7) << 5) as u8 | ((x.robot_command_coordinate_system_type & 0b11) << 3) as u8 | if x.target_x >= 0 {0u8} else {0b100u8} | ((utarget_x >> 11) & 0b11) as u8;
+        let b1: u8 = ((utarget_x >> 3) & 0xFF) as u8;
+        let utarget_y: u16 = TryFrom::try_from(x.target_y.abs()).unwrap();
+        let b2: u8 = ((utarget_x & 0b111) << 5) as u8 | if x.target_y >= 0 {0u8} else {0b10000u8} | ((utarget_y >> 9) &0b1111) as u8;
+        let b3: u8 = ((utarget_y >> 1) & 0xFF) as u8;
+        let utarget_angle: u16 = TryFrom::try_from(x.target_angle.abs()).unwrap();
+        let b4: u8 = ((utarget_y & 0b1) << 7) as u8 | if x.target_angle >= 0 {0u8} else {0b1000000u8} | ((utarget_angle >> 8) & 0b1111) as u8;
+        let b5: u8 = (utarget_angle & 0xFF) as u8;
+        let ucurrent_x: u16 = TryFrom::try_from(x.current_x.abs()).unwrap();
+        let b6: u8 = ((x.vision_data_valid as u8) << 7) | if x.current_x >= 0 {0u8} else {0b1000000u8} | ((ucurrent_x >> 7) & 0b111111) as u8;
+        let b7: u8 = ((ucurrent_x & 0b1111111) << 1) as u8 | if x.current_y >= 0 {0u8} else {0b100u8};
+        let ucurrent_y: u16 = TryFrom::try_from(x.current_y.abs()).unwrap();
+        let b8: u8 = ((ucurrent_y >> 5) & 0xFF) as u8;
+        let ucurrent_angle: u16 = TryFrom::try_from(x.current_angle.abs()).unwrap();
+        let b9: u8 = ((ucurrent_y & 0x1F) << 3) as u8 | if x.current_angle >= 0 {0} else {0b100u8} | ((ucurrent_angle >> 9) & 0b11) as u8;
+        let b10: u8 = ((ucurrent_angle >> 1) & 0xFF) as u8;
+        let b11: u8 = ((ucurrent_angle & 0b1) << 7) as u8 | ((x.command.use_sensor & 0b111) << 4) as u8 | (((x.command.kick_type as u8) & 0b1) << 3) | (x.command.kick_strength & 0b111) as u8;
         let b12: u8 = x.misc_byte;
         {
             [b0, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10, b11, b12]
@@ -90,14 +94,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let acm = AisaacCommand { use_sensor: 2, kick_type: true, kick_strength: 1};    
     let aft4 = AisaacFT4 {
         data_type: 4,
-        x_vector: 1700,
-        y_vector: 0,
-        angle_type_select: true,
-        angle: 0,
-        calibration_valid_flag: true,
-        calibratiob_x_pos: 10,
-        calibration_y_pos: 10,
-        calibration_angle: 200,
+        robot_command_coordinate_system_type: 0,
+        target_x: 1700,
+        target_y: 0,
+        target_angle: 0,
+        vision_data_valid: true,
+        current_x: 10,
+        current_y: 10,
+        current_angle: 200,
         command: acm,
         misc_byte: 0};
     // let test_buf = <[u8; 13]>::From(aft4);
