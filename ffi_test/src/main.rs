@@ -11,11 +11,11 @@ extern "C" {
                targetTheta: * mut i32,
                middle_targetX: * mut i32,
                middle_targetY: * mut i32,
-               numberOfObstacle: * mut i32,
-               ObstacleX: *mut i32,
-               ObstacleY: *mut i32,
-               ObstacleVX: *mut i32,
-               ObstacleVY: *mut i32,
+               numberOfObstacle: i32,
+               ObstacleX: *const i32,
+               ObstacleY: *const i32,
+               ObstacleVX: *const i32,
+               ObstacleVY: *const i32,
                prohibited_zone_ignore: bool,
                middle_target_flag: * mut bool,
                is_enable: * mut bool,
@@ -45,10 +45,10 @@ fn main() {
     let mut mid_tx = 10;
     let mut mid_ty = 11;
     let mut n_oo = 12;
-    let mut obstacle_x = Vec::with_capacity(n_oo as usize);
-    let mut obstacle_y = Vec::with_capacity(n_oo as usize);
-    let mut obstacle_vx = Vec::with_capacity(n_oo as usize);
-    let mut obstacle_vy = Vec::with_capacity(n_oo as usize);
+    let mut obstacle_x = Vec::new();
+    let mut obstacle_y = Vec::new();
+    let mut obstacle_vx = Vec::new();
+    let mut obstacle_vy = Vec::new();
     let pzi = false;
     let mut middle_target_flag = false;
     let mut is_enable = false;
@@ -62,13 +62,20 @@ fn main() {
 
     // println!("{}, {}", target_x, target_y);
     // println!("{}, {}", vx_out, ay_out);
+    obstacle_x.push(1000);
+    obstacle_y.push(1100);
+    obstacle_vx.push(1200);
+    obstacle_vy.push(1300);
     unsafe {
-        execDWA(x, y, theta, v_x, v_y, omega, &mut target_x, &mut target_y, &mut target_theta, &mut mid_tx, &mut mid_ty, &mut n_oo, obstacle_x.as_mut_ptr(), obstacle_y.as_mut_ptr(), obstacle_vx.as_mut_ptr(), obstacle_vy.as_mut_ptr(), pzi, &mut middle_target_flag, &mut is_enable, &mut path_enable, &mut pzs, &mut vx_out, &mut vy_out, &mut omega_out, &mut ax_out, &mut ay_out);
-        obstacle_x.set_len(n_oo as usize);
-        obstacle_y.set_len(n_oo as usize);
-        obstacle_vx.set_len(n_oo as usize);
-        obstacle_vy.set_len(n_oo as usize);
+        execDWA(x, y, theta, v_x, v_y, omega, &mut target_x, &mut target_y, &mut target_theta, &mut mid_tx, &mut mid_ty, n_oo, obstacle_x.as_ptr(), obstacle_y.as_ptr(), obstacle_vx.as_ptr(), obstacle_vy.as_ptr(), pzi, &mut middle_target_flag, &mut is_enable, &mut path_enable, &mut pzs, &mut vx_out, &mut vy_out, &mut omega_out, &mut ax_out, &mut ay_out);
+        // obstacle_x.set_len(n_oo as usize);
+        // obstacle_y.set_len(n_oo as usize);
+        // obstacle_vx.set_len(n_oo as usize);
+        // obstacle_vy.set_len(n_oo as usize);
     }
-    println!("{}, {}", target_x, target_y);
-    println!("{}, {}", vx_out, ay_out);
+    println!("{}, {}, {}", target_x, target_y, target_theta);
+    println!("{}, {}", mid_tx, mid_ty);
+    println!("{}, {}, {}, {}", middle_target_flag, is_enable, path_enable, pzs);
+    println!("{}, {}, {}", vx_out, vy_out, omega_out);
+    println!("{}, {}", ax_out, ay_out);
 }

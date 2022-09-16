@@ -11,15 +11,29 @@ void execDWA(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy, int32_
 	fprintf(stdout, "%d %d\n", x, y);
 	fprintf(stdout, "%d %d\n", Vx, Vy);
 	fprintf(stdout, "%d %d\n", theta, omega);
-	fprintf(stdout, "%d %d\n", *targetX, *targetY);
-	*targetX = 80;
+	// fprintf(stdout, "%d %d\n", *targetX, *targetY);
+	// *targetX = 80;
+	fprintf(stdout, "%d %d %d %d %d\n", numOfObstacle, ObstacleX[0], ObstacleY[0], ObstacleVX[0], ObstacleVY[0]);
 
 	fprintf(stdout, "----------------\n");
 
-	fprintf(stdout, "%d %d\n", *vx_out, *ay_out);
-	*vx_out = 101;
-	*ay_out = 101;
-	fprintf(stdout, "%d %d\n", *vx_out, *ay_out);
+	fprintf(stdout, "Update values\n");
+	// fprintf(stdout, "%d %d\n", *vx_out, *ay_out);
+	*targetX = 100;
+	*targetY = 101;
+	*targetTheta = 102;
+	*middle_targetX = 103;
+	*middle_targetY = 104;
+	*middle_target_flag = true;
+	*is_enable = true;
+	*path_enable = true;
+	*prohibited_zone_start = true;
+	*vx_out = 105;
+	*vy_out = 106;
+	*omega_out = 107;
+	*ax_out = 108;
+	*ay_out = 109;
+	// fprintf(stdout, "%d %d\n", *vx_out, *ay_out);
 
 	fprintf(stdout, "----------------\n");
 }
