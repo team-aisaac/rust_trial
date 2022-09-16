@@ -11,14 +11,13 @@ void execDWA(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy, int32_
 	fprintf(stdout, "%d %d\n", x, y);
 	fprintf(stdout, "%d %d\n", Vx, Vy);
 	fprintf(stdout, "%d %d\n", theta, omega);
-	// fprintf(stdout, "%d %d\n", *targetX, *targetY);
-	// *targetX = 80;
+	
 	fprintf(stdout, "%d %d %d %d %d\n", numOfObstacle, ObstacleX[0], ObstacleY[0], ObstacleVX[0], ObstacleVY[0]);
+	fprintf(stdout, "%d %d %d %d %d\n", numOfObstacle, ObstacleX[1], ObstacleY[1], ObstacleVX[1], ObstacleVY[1]);
 
 	fprintf(stdout, "----------------\n");
 
 	fprintf(stdout, "Update values\n");
-	// fprintf(stdout, "%d %d\n", *vx_out, *ay_out);
 	*targetX = 100;
 	*targetY = 101;
 	*targetTheta = 102;
@@ -33,7 +32,6 @@ void execDWA(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy, int32_
 	*omega_out = 107;
 	*ax_out = 108;
 	*ay_out = 109;
-	// fprintf(stdout, "%d %d\n", *vx_out, *ay_out);
 
 	fprintf(stdout, "----------------\n");
 }

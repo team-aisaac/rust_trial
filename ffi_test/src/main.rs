@@ -49,6 +49,7 @@ fn main() {
     let mut obstacle_y = Vec::new();
     let mut obstacle_vx = Vec::new();
     let mut obstacle_vy = Vec::new();
+    // https://doc.rust-lang.org/nomicon/ffi.html#creating-a-safe-interface
     let pzi = false;
     let mut middle_target_flag = false;
     let mut is_enable = false;
@@ -60,18 +61,16 @@ fn main() {
     let mut ax_out = 16;
     let mut ay_out = 17;
 
-    // println!("{}, {}", target_x, target_y);
-    // println!("{}, {}", vx_out, ay_out);
     obstacle_x.push(1000);
     obstacle_y.push(1100);
     obstacle_vx.push(1200);
     obstacle_vy.push(1300);
+    obstacle_x.push(1001);
+    obstacle_y.push(1101);
+    obstacle_vx.push(1201);
+    obstacle_vy.push(1301);
     unsafe {
         execDWA(x, y, theta, v_x, v_y, omega, &mut target_x, &mut target_y, &mut target_theta, &mut mid_tx, &mut mid_ty, n_oo, obstacle_x.as_ptr(), obstacle_y.as_ptr(), obstacle_vx.as_ptr(), obstacle_vy.as_ptr(), pzi, &mut middle_target_flag, &mut is_enable, &mut path_enable, &mut pzs, &mut vx_out, &mut vy_out, &mut omega_out, &mut ax_out, &mut ay_out);
-        // obstacle_x.set_len(n_oo as usize);
-        // obstacle_y.set_len(n_oo as usize);
-        // obstacle_vx.set_len(n_oo as usize);
-        // obstacle_vy.set_len(n_oo as usize);
     }
     println!("{}, {}, {}", target_x, target_y, target_theta);
     println!("{}, {}", mid_tx, mid_ty);
