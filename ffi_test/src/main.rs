@@ -12,10 +12,10 @@ extern "C" {
                middle_targetX: * mut i32,
                middle_targetY: * mut i32,
                numberOfObstacle: * mut i32,
-               ObstacleX: &[i32],
-               ObstacleY: &[i32],
-               ObstacleVX: &[i32],
-               ObstacleVY: &[i32],
+               ObstacleX: *mut i32,
+               ObstacleY: *mut i32,
+               ObstacleVX: *mut i32,
+               ObstacleVY: *mut i32,
                prohibited_zone_ignore: bool,
                middle_target_flag: * mut bool,
                is_enable: * mut bool,
@@ -44,11 +44,11 @@ fn main() {
     let mut targetTheta = 9;
     let mut midTX = 10;
     let mut midTY = 11;
-    let mut nOO = 12;
-    let mut ObstacleX: [i32; 32] = Default::default();
-    let mut ObstacleY: [i32; 32] = Default::default();
-    let mut ObstacleVX: [i32; 32] = Default::default();
-    let mut ObstacleVY: [i32; 32] = Default::default();
+    let mut n_oo = 12;
+    let mut obstacle_x = Vec::with_capacity(n_oo as usize);
+    let mut obstacle_y = Vec::with_capacity(n_oo as usize);
+    let mut obstacle_vx = Vec::with_capacity(n_oo as usize);
+    let mut obstacle_vy = Vec::with_capacity(n_oo as usize);
     let pzi = false;
     let mut middle_target_flag = false;
     let mut is_enable = false;
@@ -63,7 +63,7 @@ fn main() {
     println!("{}, {}", targetX, targetY);
     println!("{}, {}", vx_out, ay_out);
     unsafe {
-        execDWA(x, y, theta, Vx, Vy, omega, &mut targetX, &mut targetY, &mut targetTheta, &mut midTX, &mut midTY, &mut nOO, &mut ObstacleX, &mut ObstacleY, &mut ObstacleVX, &mut ObstacleVY, pzi, &mut middle_target_flag, &mut is_enable, &mut path_enable, &mut pzs, &mut vx_out, &mut vy_out, &mut omega_out, &mut ax_out, &mut ay_out);
+        execDWA(x, y, theta, Vx, Vy, omega, &mut targetX, &mut targetY, &mut targetTheta, &mut midTX, &mut midTY, &mut n_oo, obstacle_x.as_mut_ptr(), obstacle_y.as_mut_ptr(), obstacle_vx.as_mut_ptr(), obstacle_vy.as_mut_ptr(), pzi, &mut middle_target_flag, &mut is_enable, &mut path_enable, &mut pzs, &mut vx_out, &mut vy_out, &mut omega_out, &mut ax_out, &mut ay_out);
     }
     println!("{}, {}", targetX, targetY);
     println!("{}, {}", vx_out, ay_out);
