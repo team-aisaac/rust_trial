@@ -36,14 +36,14 @@ fn main() {
     let x = 1;
     let y = 2;
     let theta = 3;
-    let Vx = 4;
-    let Vy = 5;
+    let v_x = 4;
+    let v_y = 5;
     let omega = 6;
-    let mut targetX = 7;
-    let mut targetY = 8;
-    let mut targetTheta = 9;
-    let mut midTX = 10;
-    let mut midTY = 11;
+    let mut target_x = 7;
+    let mut target_y = 8;
+    let mut target_theta = 9;
+    let mut mid_tx = 10;
+    let mut mid_ty = 11;
     let mut n_oo = 12;
     let mut obstacle_x = Vec::with_capacity(n_oo as usize);
     let mut obstacle_y = Vec::with_capacity(n_oo as usize);
@@ -60,11 +60,15 @@ fn main() {
     let mut ax_out = 16;
     let mut ay_out = 17;
 
-    println!("{}, {}", targetX, targetY);
-    println!("{}, {}", vx_out, ay_out);
+    // println!("{}, {}", target_x, target_y);
+    // println!("{}, {}", vx_out, ay_out);
     unsafe {
-        execDWA(x, y, theta, Vx, Vy, omega, &mut targetX, &mut targetY, &mut targetTheta, &mut midTX, &mut midTY, &mut n_oo, obstacle_x.as_mut_ptr(), obstacle_y.as_mut_ptr(), obstacle_vx.as_mut_ptr(), obstacle_vy.as_mut_ptr(), pzi, &mut middle_target_flag, &mut is_enable, &mut path_enable, &mut pzs, &mut vx_out, &mut vy_out, &mut omega_out, &mut ax_out, &mut ay_out);
+        execDWA(x, y, theta, v_x, v_y, omega, &mut target_x, &mut target_y, &mut target_theta, &mut mid_tx, &mut mid_ty, &mut n_oo, obstacle_x.as_mut_ptr(), obstacle_y.as_mut_ptr(), obstacle_vx.as_mut_ptr(), obstacle_vy.as_mut_ptr(), pzi, &mut middle_target_flag, &mut is_enable, &mut path_enable, &mut pzs, &mut vx_out, &mut vy_out, &mut omega_out, &mut ax_out, &mut ay_out);
+        obstacle_x.set_len(n_oo as usize);
+        obstacle_y.set_len(n_oo as usize);
+        obstacle_vx.set_len(n_oo as usize);
+        obstacle_vy.set_len(n_oo as usize);
     }
-    println!("{}, {}", targetX, targetY);
+    println!("{}, {}", target_x, target_y);
     println!("{}, {}", vx_out, ay_out);
 }
