@@ -1,18 +1,10 @@
-extern crate protoc_rust;
+use protobuf_codegen::Codegen;
 
-use protoc_rust::Customize;
-use std::error::Error;
-
-fn main() -> Result<(), Box<Error>> {
-    let proto_files = vec!["src/aisaaccommand.proto"];
-
-    protoc_rust::run(protoc_rust::Args {
-        input: &proto_files[..],
-        out_dir: "src/protos",
-        includes: &[],
-        customize: Customize {
-            ..Default::default()
-        },
-    })?;
-    OK(())
+fn main() {
+    Codegen::new()
+        .protoc()
+        .includes(&["src/protos"])
+        .input("src/protos/aisaaccommand.proto")
+        .out_dir("src/protos")
+        .run_from_script();
 }
