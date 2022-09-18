@@ -8,6 +8,7 @@ use protobuf::Message;
 mod protos;
 
 extern "C" {
+    fn hello_world();
     fn execDWA(x: i32,
                y: i32,
                theta: i32,
@@ -26,7 +27,7 @@ extern "C" {
                ObstacleVY: *const i32,
                prohibited_zone_ignore: bool,
                middle_target_flag: * mut bool,
-               is_enable: * mut bool,
+               dwa_result_valid: * mut bool,
                path_enable: * mut bool,
                prohibited_zone_start: * mut bool,
                vx_out: * mut i32,
@@ -65,23 +66,13 @@ fn parse_protobuf_from_strategy_pc(input: [u8; 2048], buf_size: usize) -> protos
     return cmd
 }
 
-fn serialize_to_stm32() -> Vec<u8> {
+fn serialize_to_stm32(current_pos: protos::aisaaccommand::Position, move_vec: protos::aisaaccommand::Velocity, target_pos: protos::aisaaccommand::Position, dwa_result_valid: bool, path_enable: bool, dwa_result: protos::aisaaccommand::DwaResult, kick: protos::aisaaccommand::Kick) -> Vec<u8> {
     let mut cmd = protos::aisaaccommand::RaspiCommand::new();
-    let mut current_pos = protos::aisaaccommand::Position::new();
-    // Set current_pos
     cmd.current_pos = protobuf::MessageField::some(current_pos);
-    let mut target_pos = protos::aisaaccommand::Position::new();
-    // Set target_pos
-    cmd.target_pos = protobuf::MessageField::some(target_pos);
-    let mut move_vec = protos::aisaaccommand::Velocity::new();
-    // Set move_vec
     cmd.move_vec = protobuf::MessageField::some(move_vec);
-    cmd.is_dwa_valid = true;
-    let mut dwa_result = protos::aisaaccommand::DwaResult::new();
-    // Set dwa
-    cmd.dwa = protobuf::MessageField::some(dwa_result);
-    let mut kick = protos::aisaaccommand::Kick::new();
-    // Set kick
+    cmd.target_pos = protobuf::MessageField::some(target_pos);
+    cmd.dwa_result_valid = dwa_result_valid;
+    cmd.dwa_result = protobuf::MessageField::some(dwa_result);
     cmd.kick = protobuf::MessageField::some(kick);
     return cmd.write_to_bytes().unwrap();
 }
@@ -89,6 +80,9 @@ fn serialize_to_stm32() -> Vec<u8> {
 fn main() -> std::io::Result<()> {
     println!("UDP UART convert DWA version");
     println!("Waiting at port 11312");
+    unsafe {
+        hello_world();
+    }
     // UDP wait
     let socket = UdpSocket::bind("0.0.0.0:11312")?; // INADDR_ANY
     socket.set_nonblocking(true).unwrap();
@@ -124,18 +118,24 @@ fn main() -> std::io::Result<()> {
                 let mut target_x = received_cmd.target_pos.x;
                 let mut target_y = received_cmd.target_pos.y;
                 let mut target_theta = received_cmd.target_pos.theta;
-                let mut mid_tx = received_cmd.middle_target.x;
-                let mut mid_ty = received_cmd.middle_target.y;
+                let mut mid_tx = 0;
+                let mut mid_ty = 0;
                 let number_of_obstacles = received_cmd.obstacles.len() as i32;
                 println!("{}", number_of_obstacles);
                 let mut obstacle_x = Vec::new();
                 let mut obstacle_y = Vec::new();
                 let mut obstacle_vx = Vec::new();
                 let mut obstacle_vy = Vec::new();
+                for obstacle in received_cmd.obstacles {
+                    obstacle_x.push(obstacle.x);
+                    obstacle_y.push(obstacle.y);
+                    obstacle_vx.push(obstacle.vx);
+                    obstacle_vy.push(obstacle.vy);
+                }
                 // https://doc.rust-lang.org/nomicon/ffi.html#creating-a-safe-interface
                 let prohibited_zone_ignore = received_cmd.prohibited_zone_ignore;
                 let mut middle_target_flag = false;
-                let mut is_enable = false;
+                let mut dwa_result_valid = false;
                 let mut path_enable = false;
                 let mut pzs = false;
                 let mut vx_out = 0;
@@ -146,10 +146,22 @@ fn main() -> std::io::Result<()> {
 
                 // DWA
                 unsafe {
-                    execDWA(x, y, theta, v_x, v_y, omega, &mut target_x, &mut target_y, &mut target_theta, &mut mid_tx, &mut mid_ty, number_of_obstacles, obstacle_x.as_ptr(), obstacle_y.as_ptr(), obstacle_vx.as_ptr(), obstacle_vy.as_ptr(), prohibited_zone_ignore, &mut middle_target_flag, &mut is_enable, &mut path_enable, &mut pzs, &mut vx_out, &mut vy_out, &mut omega_out, &mut ax_out, &mut ay_out);
+                    execDWA(x, y, theta, v_x, v_y, omega, &mut target_x, &mut target_y, &mut target_theta, &mut mid_tx, &mut mid_ty, number_of_obstacles, obstacle_x.as_ptr(), obstacle_y.as_ptr(), obstacle_vx.as_ptr(), obstacle_vy.as_ptr(), prohibited_zone_ignore, &mut middle_target_flag, &mut dwa_result_valid, &mut path_enable, &mut pzs, &mut vx_out, &mut vy_out, &mut omega_out, &mut ax_out, &mut ay_out);
                 }
 
-                let serialized_data = serialize_to_stm32();
+                // Send to STM32
+                let mut target_pos = protos::aisaaccommand::Position::new();
+                target_pos.x = target_x;
+                target_pos.y = target_y;
+                target_pos.theta = target_theta;
+                let mut dwa_result = protos::aisaaccommand::DwaResult::new();
+                dwa_result.vx = vx_out;
+                dwa_result.vy = vy_out;
+                dwa_result.omega = omega_out;
+                dwa_result.ax = ax_out;
+                dwa_result.ay = ay_out;
+                
+                let serialized_data = serialize_to_stm32(received_cmd.current_pos.unwrap(), received_cmd.move_vec.unwrap(), target_pos, dwa_result_valid, path_enable, dwa_result, received_cmd.kick.unwrap());
 
                 let mut escaped_buf: Vec<u8> = vec![0x7Eu8];        // Start delimiter
                 escape_for_serial(serialized_data.len() as u8, &mut escaped_buf);    // Length

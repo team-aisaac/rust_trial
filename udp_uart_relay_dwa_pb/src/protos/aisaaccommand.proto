@@ -45,7 +45,7 @@ message Kick {
 message DwaResult {
   int32 vx = 1;
   int32 vy = 2;
-  int32 theta = 3;
+  int32 omega = 3;
   int32 ax = 4;
   int32 ay = 5;
 }
@@ -53,22 +53,22 @@ message DwaResult {
 // StrategyPC -> RasPi
 message SpcCommand {
   Position current_pos = 1;
-  Position target_pos = 2;
-  Velocity move_vec = 3;
+  Velocity move_vec = 2;
+  Position target_pos = 3;
   repeated Obstacle obstacles = 4;
   Kick kick = 5;
   bool prohibited_zone_ignore = 6;
-  Position middle_target = 7;
 }
 
 // RasPi -> STM32
 message RaspiCommand {
   Position current_pos = 1;
-  Position target_pos = 2;
-  Velocity move_vec = 3;
-  bool is_dwa_valid = 4;
-  DwaResult dwa = 5;
-  Kick kick = 6;
+  Velocity move_vec = 2;
+  Position target_pos = 3;
+  bool dwa_result_valid = 4;
+  bool path_enable = 5;
+  DwaResult dwa_result = 6;
+  Kick kick = 7;
 }
 
 message RobotStatus {
