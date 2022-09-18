@@ -13,7 +13,9 @@ fn main() {
         .run_from_script();
     // Build libdwa.a
     gcc::Build::new()
-        .file("src/dwa.c")
+        .file("src/dwa2.c")
+        .file("src/RaspiTrapezoidalControl.c")
+        .file("src/Target_abjust.c")
         .compile("dwa");
     // FFI
     let project_dir = env::var("CARGO_MANIFEST_DIR").unwrap();

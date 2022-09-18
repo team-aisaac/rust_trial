@@ -8,7 +8,7 @@ use protobuf::Message;
 mod protos;
 
 extern "C" {
-    fn hello_world();
+    // fn hello_world();
     fn execDWA(x: i32,
                y: i32,
                theta: i32,
@@ -80,9 +80,9 @@ fn serialize_to_stm32(current_pos: protos::aisaaccommand::Position, move_vec: pr
 fn main() -> std::io::Result<()> {
     println!("UDP UART convert DWA version");
     println!("Waiting at port 11312");
-    unsafe {
-        hello_world();
-    }
+    // unsafe {
+    //     hello_world();
+    // }
     // UDP wait
     let socket = UdpSocket::bind("0.0.0.0:11312")?; // INADDR_ANY
     socket.set_nonblocking(true).unwrap();
