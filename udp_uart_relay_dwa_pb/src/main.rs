@@ -17,7 +17,7 @@ extern "C" {
                omega: i32,
                targetX: * mut i32,
                targetY: * mut i32,
-               targetTheta: * mut i32,
+               targetTheta: i32,
                middle_targetX: * mut i32,
                middle_targetY: * mut i32,
                numberOfObstacle: i32,
@@ -117,7 +117,7 @@ fn main() -> std::io::Result<()> {
                 let omega = received_cmd.move_vec.omega;
                 let mut target_x = received_cmd.target_pos.x;
                 let mut target_y = received_cmd.target_pos.y;
-                let mut target_theta = received_cmd.target_pos.theta;
+                let target_theta = received_cmd.target_pos.theta;
                 let mut mid_tx = 0;
                 let mut mid_ty = 0;
                 let number_of_obstacles = received_cmd.obstacles.len() as i32;
@@ -146,7 +146,7 @@ fn main() -> std::io::Result<()> {
 
                 // DWA
                 unsafe {
-                    execDWA(x, y, theta, v_x, v_y, omega, &mut target_x, &mut target_y, &mut target_theta, &mut mid_tx, &mut mid_ty, number_of_obstacles, obstacle_x.as_ptr(), obstacle_y.as_ptr(), obstacle_vx.as_ptr(), obstacle_vy.as_ptr(), prohibited_zone_ignore, &mut middle_target_flag, &mut dwa_result_valid, &mut path_enable, &mut pzs, &mut vx_out, &mut vy_out, &mut omega_out, &mut ax_out, &mut ay_out);
+                    execDWA(x, y, theta, v_x, v_y, omega, &mut target_x, &mut target_y, target_theta, &mut mid_tx, &mut mid_ty, number_of_obstacles, obstacle_x.as_ptr(), obstacle_y.as_ptr(), obstacle_vx.as_ptr(), obstacle_vy.as_ptr(), prohibited_zone_ignore, &mut middle_target_flag, &mut dwa_result_valid, &mut path_enable, &mut pzs, &mut vx_out, &mut vy_out, &mut omega_out, &mut ax_out, &mut ay_out);
                 }
 
                 // Send to STM32
