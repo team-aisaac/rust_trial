@@ -50,6 +50,12 @@ message DwaResult {
   int32 ay = 5;
 }
 
+enum RobotCommandCoordinateSystemType {
+  Vector = 0;
+  Coordinate = 1;
+  Relax = 2;
+}
+
 // StrategyPC -> RasPi
 message SpcCommand {
   Position current_pos = 1;
@@ -58,6 +64,8 @@ message SpcCommand {
   repeated Obstacle obstacles = 4;
   Kick kick = 5;
   bool prohibited_zone_ignore = 6;
+  RobotCommandCoordinateSystemType robot_command_coordinate_system_type = 7;
+  bool vision_data_valid = 8;
 }
 
 // RasPi -> STM32
@@ -69,6 +77,8 @@ message RaspiCommand {
   bool path_enable = 5;
   DwaResult dwa_result = 6;
   Kick kick = 7;
+  RobotCommandCoordinateSystemType robot_command_coordinate_system_type = 8;
+  bool vision_data_valid = 9;
 }
 
 message RobotStatus {
