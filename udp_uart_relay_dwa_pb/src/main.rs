@@ -66,7 +66,7 @@ fn parse_protobuf_from_strategy_pc(input: [u8; 2048], buf_size: usize) -> protos
     return cmd
 }
 
-fn serialize_to_stm32(current_pos: protos::aisaaccommand::Position, move_vec: protos::aisaaccommand::Velocity, target_pos: protos::aisaaccommand::Position, dwa_result_valid: bool, path_enable: bool, dwa_result: protos::aisaaccommand::DwaResult, kick: protos::aisaaccommand::Kick) -> Vec<u8> {
+fn serialize_to_stm32(current_pos: protos::aisaaccommand::Position, move_vec: protos::aisaaccommand::Velocity, target_pos: protos::aisaaccommand::Position, dwa_result_valid: bool, path_enable: bool, dwa_result: protos::aisaaccommand::DwaResult, kick: protos::aisaaccommand::Kick, robot_command_coordinate_system_type: protos::aisaaccommand::RobotCommandCoordinateSystemType, vision_data_valid: bool) -> Vec<u8> {
     let mut cmd = protos::aisaaccommand::RaspiCommand::new();
     cmd.current_pos = protobuf::MessageField::some(current_pos);
     cmd.move_vec = protobuf::MessageField::some(move_vec);
@@ -74,6 +74,8 @@ fn serialize_to_stm32(current_pos: protos::aisaaccommand::Position, move_vec: pr
     cmd.dwa_result_valid = dwa_result_valid;
     cmd.dwa_result = protobuf::MessageField::some(dwa_result);
     cmd.kick = protobuf::MessageField::some(kick);
+    cmd.robot_command_coordinate_system_type = protobuf::EnumOrUnknown::new(robot_command_coordinate_system_type);
+    cmd.vision_data_valid = vision_data_valid;
     return cmd.write_to_bytes().unwrap();
 }
 
@@ -161,7 +163,7 @@ fn main() -> std::io::Result<()> {
                 dwa_result.ax = ax_out;
                 dwa_result.ay = ay_out;
                 
-                let serialized_data = serialize_to_stm32(received_cmd.current_pos.unwrap(), received_cmd.move_vec.unwrap(), target_pos, dwa_result_valid, path_enable, dwa_result, received_cmd.kick.unwrap());
+                let serialized_data = serialize_to_stm32(received_cmd.current_pos.unwrap(), received_cmd.move_vec.unwrap(), target_pos, dwa_result_valid, path_enable, dwa_result, received_cmd.kick.unwrap(), received_cmd.robot_command_coordinate_system_type.unwrap(), received_cmd.vision_data_valid);
 
                 let mut escaped_buf: Vec<u8> = vec![0x7Eu8];        // Start delimiter
                 escape_for_serial(serialized_data.len() as u8, &mut escaped_buf);    // Length
