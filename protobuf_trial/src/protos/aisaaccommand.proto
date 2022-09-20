@@ -14,6 +14,11 @@ message Velocity {
   int32 omega = 3;
 }
 
+message Acceleration {
+  int32 ax = 1;
+  int32 ay = 2;
+}
+
 message Obstacle {
   int32 x = 1;
   int32 y = 2;
@@ -45,34 +50,43 @@ message Kick {
 message DwaResult {
   int32 vx = 1;
   int32 vy = 2;
-  int32 theta = 3;
+  int32 omega = 3;
   int32 ax = 4;
   int32 ay = 5;
 }
 
+enum RobotCommandCoordinateSystemType {
+  Vector = 0;
+  Coordinate = 1;
+  Relax = 2;
+}
+
 // StrategyPC -> RasPi
+// RasPi -> STM32
 message SpcCommand {
   Position current_pos = 1;
-  Position target_pos = 2;
-  Velocity move_vec = 3;
+  Velocity move_vec = 2;
+  Position target_pos = 3;
   repeated Obstacle obstacles = 4;
   Kick kick = 5;
-  bool prohidited_zone_ignore = 6;
+  bool prohibited_zone_ignore = 6;
+  RobotCommandCoordinateSystemType robot_command_coordinate_system_type = 7;
+  bool vision_data_valid = 8;
 }
 
+// DWA Result
 // RasPi -> STM32
 message RaspiCommand {
-  Position current_pos = 1;
-  Position target_pos = 2;
-  Velocity move_vec = 3;
-  bool is_dwa_valid = 4;
-  DwaResult dwa = 5;
-  Kick kick = 6;
+  Position target_pos = 1;
+  bool dwa_result_valid = 2;
+  bool path_enable = 3;
+  DwaResult dwa_result = 4;
 }
 
-message RobotStatus {
+message RobotState {
   Position current_pos = 1;
   Velocity current_vel = 2;
+  Acceleration current_accel = 3;
 } 
 
 message AIsaacCommand {

@@ -16,4 +16,5 @@ fn main() {
 
     let msg = protos::aisaaccommand::AIsaacCommand::parse_from_bytes(&output).unwrap();
     println!("cx: {}, cy: {}", msg.current_x, msg.current_y);
+    println!("current angle: {}", msg.current_angle);
 }
