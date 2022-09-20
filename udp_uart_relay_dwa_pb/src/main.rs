@@ -59,7 +59,10 @@ fn parse_protobuf_from_strategy_pc(input: [u8; 2048], buf_size: usize) -> protos
     println!("Protocon version: {}.{}", input[0], input[1]);
     println!("Robot ID: {}", input[2]);
     println!("Sequence No: {}", input[3]);
-    println!("Sequence No: {}", input[4]);
+    let data_type = input[4] >> 5;
+    let sub_data_type = input[4] & 0b11111;
+    println!("Data type: {}, {}", data_type, sub_data_type);
+    // ToDo: データの種類チェックの実装
     let serealized = &input[5..buf_size];
 
     let cmd = protos::aisaaccommand::SpcCommand::parse_from_bytes(&serealized).unwrap();
