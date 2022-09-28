@@ -1,7 +1,7 @@
 #ifndef _TRAPEZOIDALCONTROL_H_
 #define _TRAPEZOIDALCONTROL_H_
 
-#define TRAP_TIME_STEP 0.01
+#define TRAP_TIME_STEP 0.04
 
 //構造体
 //ロボットの状態を保存する構造体

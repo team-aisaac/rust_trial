@@ -1,7 +1,6 @@
 #ifndef _TARGET_ABJUST_H_
 #define _TARGET_ABJUST_H_
 
-#define ROBOT_SIZE 180            //robot size(diameter mm)
 //フィールド選択
 #define FIELD "A" //  フィールドの選択A or B
 //ペナルティゾーンのpathのマージン
@@ -18,8 +17,8 @@
 #define FIELD_Y_B 6600
 #define FIELD_OUT_LINE 300  //フィールドの外白線と壁までの距離
 //フィールドのペナルティゾーンのマージン設定
-#define PENALTY_MARGIN 5   //mm
-#define PENALTY_OUT_MARGIN 10   //mm
+#define PENALTY_MARGIN 3   //mm
+#define PENALTY_OUT_MARGIN 15   //mm
 #define MIDLE_TARGET_MARGIN 50   //mm
 #define PENALTY_MIDLE_TARGET_MARGIN 300   //mm
 //侵入禁止エリアに侵入している際に使うマクロ
