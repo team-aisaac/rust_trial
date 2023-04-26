@@ -1,32 +1,37 @@
+#define _USE_MATH_DEFINES
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
-#include "dwa.h"
-#include "tools.h"
 #include <time.h>
 
-#include "Target_abjust.c"
-#include "RaspiTrapezoidalControl.c"
-#include "tools.c"
+#include "dwa2.h"
+#include "Target_abjust.h"
+#include "RaspiTrapezoidalControl.h"
+#include "tools.h"
 
+// #include "/opt/ros/foxy/include/rcutils/logging_macros.h"
+// #include "/opt/ros/foxy/include/rcutils/logging.h"
 
+//#include "Target_abjust.c"
+//#include "RaspiTrapezoidalControl.c"
+//#include "tools.c"
 
-float robot_max_velo = 3000;  //ロボットの最大速度(mm/s)
-float robot_max_accel = 2000; //ロボットの最大速度(mm/s^2)
+float robot_max_velo = ROBOT_MAX_VEL;  //ロボットの最大速度(mm/s)
+float robot_max_accel = ROBOT_MAX_ACCEL; //ロボットの最大速度(mm/s^2)
 
-float x_penalty_line_puls;
-float x_penalty_line_minus;
-float y_penalty_line_puls;
-float y_penalty_line_minus;
-float x_outside_line_puls;
-float x_outside_line_minus;
-float y_outside_line_puls;
-float y_outside_line_minus;
+float dwa_x_penalty_line_puls;
+float dwa_x_penalty_line_minus;
+float dwa_y_penalty_line_puls;
+float dwa_y_penalty_line_minus;
+float dwa_x_outside_line_puls;
+float dwa_x_outside_line_minus;
+float dwa_y_outside_line_puls;
+float dwa_y_outside_line_minus;
 
-float timestep_reciprocal = 1 / TIME_STEP;
+float timestep_reciprocal = 1 / DWA_CAL_TIME_STEP;
 
 //ロボットの軌道予測(long path用)
 void predict_robot_long_path(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy, int32_t omega,
@@ -36,12 +41,12 @@ void predict_robot_long_path(int32_t x, int32_t y, int32_t theta, int32_t Vx, in
     float temp_y = y;
     float vx = Vx;
     float vy = Vy;
-    for (int i = 0; i < long_path_predict_step; i++)
+    for (uint32_t i = 0; i < long_path_predict_step; i++)
     {
-        temp_x = vx * TIME_STEP + 0.5 * accel_x * TIME_STEP * TIME_STEP + temp_x;
-        temp_y = vy * TIME_STEP + 0.5 * accel_y * TIME_STEP * TIME_STEP + temp_y;
-        vx = vx + accel_x * TIME_STEP;
-        vy = vy + accel_y * TIME_STEP;
+        temp_x = vx * DWA_CAL_TIME_STEP + 0.5 * accel_x * DWA_CAL_TIME_STEP * DWA_CAL_TIME_STEP + temp_x;
+        temp_y = vy * DWA_CAL_TIME_STEP + 0.5 * accel_y * DWA_CAL_TIME_STEP * DWA_CAL_TIME_STEP + temp_y;
+        vx = vx + accel_x * DWA_CAL_TIME_STEP;
+        vy = vy + accel_y * DWA_CAL_TIME_STEP;
         float v_cof = robot_max_velo / sqrtf(vx * vx + vy * vy);
         if (v_cof < 1)
         {
@@ -64,12 +69,12 @@ void predict_robot_fine_path(int32_t x, int32_t y, int32_t theta, int32_t Vx, in
     float temp_y = y;
     float vx = Vx;
     float vy = Vy;
-    for (int i = 0; i < fine_path_predict_step; i++)
+    for (uint32_t i = 0; i < fine_path_predict_step; i++)
     {
-        temp_x = vx * TIME_STEP + 0.5 * accel_x * TIME_STEP * TIME_STEP + temp_x;
-        temp_y = vy * TIME_STEP + 0.5 * accel_y * TIME_STEP * TIME_STEP + temp_y;
-        vx = vx + accel_x * TIME_STEP;
-        vy = vy + accel_y * TIME_STEP;
+        temp_x = vx * DWA_CAL_TIME_STEP + 0.5 * accel_x * DWA_CAL_TIME_STEP * DWA_CAL_TIME_STEP + temp_x;
+        temp_y = vy * DWA_CAL_TIME_STEP + 0.5 * accel_y * DWA_CAL_TIME_STEP * DWA_CAL_TIME_STEP + temp_y;
+        vx = vx + accel_x * DWA_CAL_TIME_STEP;
+        vy = vy + accel_y * DWA_CAL_TIME_STEP;
         float v_cof = robot_max_velo / sqrtf(vx * vx + vy * vy);
         if (v_cof < 1)
         {
@@ -137,11 +142,12 @@ void execDWA(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy, int32_
              bool *is_enable, bool *path_enable, int32_t *output_vx, int32_t *output_vy, int32_t *output_omega, int32_t *output_ax, int32_t *output_ay)
 {
     //フィールドデータの代入
-    field_data(&x_penalty_line_puls, &x_penalty_line_minus, &y_penalty_line_puls, &y_penalty_line_minus, &x_outside_line_puls,
-               &x_outside_line_minus, &y_outside_line_puls, &y_outside_line_minus);
+    field_data(&dwa_x_penalty_line_puls, &dwa_x_penalty_line_minus, &dwa_y_penalty_line_puls, &dwa_y_penalty_line_minus, &dwa_x_outside_line_puls,
+               &dwa_x_outside_line_minus, &dwa_y_outside_line_puls, &dwa_y_outside_line_minus);
     //フィールド外の目標値やペナルティゾーン内の目標値を適正な箇所に設置し直す
     bool prohidited_zone_start = 0;
     *midle_target_flag = target_abjust(x, y, targetX, targetY, midle_targetX, midle_targetY, prohidited_zone_ignore, &prohidited_zone_start);
+    //RCUTILS_LOG_INFO("midle_target_flag: %d,prohidited_zone_ignore: %d",*midle_target_flag, prohidited_zone_ignore);
     //現在距離と目標値から予測時間を算出
     float distance = cal_robot_target_distance(x, y, *targetX, *targetY, *midle_targetX, *midle_targetY, *midle_target_flag);
     uint32_t long_path_predict_step;                                                  // long pathの予想ステップ数
@@ -189,8 +195,9 @@ void execDWA(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy, int32_
                    obs_size, obs_imfo, obs_predict_step, *midle_target_flag,
                    &fine_opt_path, fine_path_predict_step);
     //制動距離を算出して壁に激突しないか判定する
-    bool ollision_flag = 0;
-    avoid_field_wall_ollision(x, y, theta, Vx, Vy, omega, &fine_opt_path, fine_path_predict_step, &ollision_flag);
+    bool collision_flag = 0;
+    avoid_obstacle_collision(x, y, obs_size, obs_imfo, &fine_opt_path, fine_path_predict_step, &collision_flag);
+    avoid_field_wall_collision(x, y, theta, Vx, Vy, omega, &fine_opt_path, fine_path_predict_step, &collision_flag);
 
     //最適と計算されたpathを格納
     *output_vx = fine_opt_path.vx[0];
@@ -201,12 +208,13 @@ void execDWA(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy, int32_
     *output_omega = 0;
     *is_enable = DWA_enable_check(long_opt_path.availability_flag, fine_opt_path.availability_flag);
     *path_enable = path_enable_check(x, y, Vx, Vy, *targetX, *targetY, *output_vx, *output_vy, *output_ax, *output_ay, obs_imfo, obs_size, long_path_predict_step, prohidited_zone_ignore,
-                                     *midle_target_flag, ollision_flag, *path_enable, prohidited_zone_start);
+                                     *midle_target_flag, collision_flag, *path_enable, prohidited_zone_start);
 
     //メモリの解放
     free(obs_imfo);
     free(long_prediction);
     free(fine_prediction);
+    
 }
 // DWAで全体方位をざっくり計算するために経路を検索する関数(long path用)
 void make_path_long(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy, int32_t omega, int32_t targetTheta,
@@ -290,7 +298,7 @@ void eval_long_path(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy,
     //評価計算
     if (midle_target_flag == 0)
     {
-        for (int i = 0; i < path_size; i++)
+        for (uint16_t i = 0; i < path_size; i++)
         {
             score_obstacles[i] = obstacle(long_prediction[i].x, long_prediction[i].y, obs_avoid_step_size - 1, obs_size, &long_prediction[i].availability_flag, obs_imfo, targetX, targetY);
             score_heading_angle[i] = heading_angle(long_prediction[i].x, long_prediction[i].y, long_prediction[i].theta, long_prediction[i].vx, long_prediction[i].vy, long_prediction[i].omega, long_prediction[i].availability_flag, long_path_predict_step - 1, targetX, targetY);
@@ -304,7 +312,7 @@ void eval_long_path(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy,
 
         // scoreが最高値となるpathを算出
         float score = 0;
-        for (int i = 0; i < path_size; i++)
+        for (uint16_t i = 0; i < path_size; i++)
         {
             if (long_prediction[i].availability_flag == 0)
             { //障害物と衝突していないpathを抽出
@@ -324,7 +332,7 @@ void eval_long_path(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy,
     }
     else
     {
-        for (int i = 0; i < path_size; i++)
+        for (uint16_t i = 0; i < path_size; i++)
         {
             score_obstacles[i] = obstacle(long_prediction[i].x, long_prediction[i].y, long_path_predict_step - 1, obs_size, &long_prediction[i].availability_flag, obs_imfo, targetX, targetY);
             long_path_midle_target_score(long_prediction[i].x, long_prediction[i].y, long_prediction[i].theta, long_prediction[i].vx, long_prediction[i].vy, long_prediction[i].omega, long_prediction[i].availability_flag,
@@ -337,7 +345,7 @@ void eval_long_path(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy,
 
         // scoreが最高値となるpathを算出
         float score = 0;
-        for (int i = 0; i < path_size; i++)
+        for (uint16_t i = 0; i < path_size; i++)
         {
             if (long_prediction[i].availability_flag == 0)
             { //障害物と衝突していないpathを抽出
@@ -382,7 +390,7 @@ void eval_fine_path(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy,
     //評価計算
     if (midle_target_flag == 0)
     {
-        for (int i = 0; i < path_size; i++)
+        for (uint16_t i = 0; i < path_size; i++)
         {
             score_obstacles[i] = obstacle(fine_prediction[i].x, fine_prediction[i].y, obs_avoid_step_size - 1, obs_size, &fine_prediction[i].availability_flag, obs_imfo, targetX, targetY);
             score_heading_angle[i] = heading_angle(fine_prediction[i].x, fine_prediction[i].y, fine_prediction[i].theta, fine_prediction[i].vx, fine_prediction[i].vy, fine_prediction[i].omega, fine_prediction[i].availability_flag, fine_path_predict_step - 1, targetX, targetY);
@@ -396,7 +404,7 @@ void eval_fine_path(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy,
 
         // scoreが最高値となるpathを算出
         float score = 0;
-        for (int i = 0; i < path_size; i++)
+        for (uint16_t i = 0; i < path_size; i++)
         {
             if (fine_prediction[i].availability_flag == 0)
             { //障害物と衝突していないpathを抽出
@@ -416,7 +424,7 @@ void eval_fine_path(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy,
     }
     else
     {
-        for (int i = 0; i < path_size; i++)
+        for (uint16_t i = 0; i < path_size; i++)
         {
             score_obstacles[i] = obstacle(fine_prediction[i].x, fine_prediction[i].y, fine_path_predict_step - 1, obs_size, &fine_prediction[i].availability_flag, obs_imfo, targetX, targetY);
             score_heading_angle[i] = heading_angle(fine_prediction[i].x, fine_prediction[i].y, fine_prediction[i].theta, fine_prediction[i].vx, fine_prediction[i].vy, fine_prediction[i].omega, fine_prediction[i].availability_flag, fine_path_predict_step - 1, midle_targetX, midle_targetY);
@@ -434,7 +442,7 @@ void eval_fine_path(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy,
 
         // scoreが最高値となるpathを算出
         float score = 0;
-        for (int i = 0; i < path_size; i++)
+        for (uint16_t i = 0; i < path_size; i++)
         {
             if (fine_prediction[i].availability_flag == 0)
             { //障害物と衝突していないpathを抽出
@@ -540,7 +548,7 @@ void long_path_midle_target_score(float path_x[], float path_y[], float path_th[
     float temp_score_heading_velo[size_max];
     float normal_temp_score_angle[size_max];
     float normal_temp_score_heading_velo[size_max];
-    for (int i = 0; i < size_max; i++)
+    for (uint16_t i = 0; i < size_max; i++)
     {
         //角度計算
         float angle_to_goal = atan2f((float)targetY - path_y[i], (float)targetX - path_x[i]);
@@ -560,7 +568,7 @@ void long_path_midle_target_score(float path_x[], float path_y[], float path_th[
     min_max_normalize(normal_temp_score_heading_velo, size_max);
     //評価が最大となる番号を探索する
     float score = 0;
-    for (int i = 0; i < size_max; i++)
+    for (uint16_t i = 0; i < size_max; i++)
     {
         float temp_score =  LONG_WEIGHT_ANGLE_MIDLE_TARGET * normal_temp_score_angle[i] + LONG_WEIGHT_VELO_MIDLE_TARGET * normal_temp_score_heading_velo[i];
         if (score < temp_score)
@@ -586,7 +594,7 @@ void fine_path_midle_target_score(float path_x[], float path_y[], float path_th[
     float temp_score_heading_velo[size_max];
     float normal_temp_score_angle[size_max];
     float normal_temp_score_heading_velo[size_max];
-    for (int i = 0; i < size_max; i++)
+    for (uint16_t i = 0; i < size_max; i++)
     {
         //角度計算
         float angle_to_goal = atan2f((float)targetY - path_y[i], (float)targetX - path_x[i]);
@@ -606,7 +614,7 @@ void fine_path_midle_target_score(float path_x[], float path_y[], float path_th[
     min_max_normalize(normal_temp_score_heading_velo, size_max);
     //評価が最大となる番号を探索する
     float score = 0;
-    for (int i = 0; i < size_max; i++)
+    for (uint16_t i = 0; i < size_max; i++)
     {
         float temp_score = FINE_WEIGHT_ANGLE_MIDLE_TARGET * normal_temp_score_angle[i] + FINE_WEIGHT_VELO_MIDLE_TARGET * normal_temp_score_heading_velo[i];
         if (score < temp_score)
@@ -628,7 +636,7 @@ int16_t nearest_obs_mun(int32_t x, int32_t y, int32_t vx, int32_t vy, int32_t nu
     //計算すべき障害物の抽出
     int16_t obs_num = 0;
     float velocity;
-    float cul_time = 0.8;
+    float cul_time = 1.0;
     vx = vx * cul_time;
     vy = vy * cul_time;
     float cul_time_4 = cul_time*cul_time*cul_time*cul_time;
@@ -642,7 +650,7 @@ int16_t nearest_obs_mun(int32_t x, int32_t y, int32_t vx, int32_t vy, int32_t nu
         c1 = -2 * (vx * vx + vy * vy);
     }
     float robot_circle = velocity * cul_time - 0.5 * robot_max_accel * cul_time*cul_time;
-    for (int i = 0; i < numOfObstacle; i++)
+    for (int32_t i = 0; i < numOfObstacle; i++)
     {
         float obstacle_check = ((ObstacleX[i] - (x + vx)) * (ObstacleX[i] - (x + vx)) + (ObstacleY[i] - (y + vy)) * (ObstacleY[i] - (y + vy))) * (4 / (robot_max_accel * robot_max_accel * cul_time_4));
         if (obstacle_check < 1 && robot_circle <= 0)
@@ -653,7 +661,12 @@ int16_t nearest_obs_mun(int32_t x, int32_t y, int32_t vx, int32_t vy, int32_t nu
         {
             float c2 = (ObstacleX[i] - x) * (vy - vx) - (vx + vy) * (ObstacleY[i] - y);
             float c3 = (vx - vy) * (ObstacleY[i] - y) - (vx + vy) * (ObstacleX[i] - x);
-            if ((c2 + c3) / c1 <= 1)
+            float c_check = (c2 + c3) / c1;
+            if (0 < c_check && c_check <= 1 && 0 < c1*c2 && 0 < c1*c3)
+            {
+                obs_num++;
+            }
+            else if(sqrtf((ObstacleX[i] - x)*(ObstacleX[i] - x) + (ObstacleY[i] - y)*(ObstacleY[i] - y)) < (ROBOT_SIZE + MARGIN_DISTANCE))
             {
                 obs_num++;
             }
@@ -670,7 +683,7 @@ void cul_obs(int32_t x, int32_t y, int32_t vx, int32_t vy, int32_t numOfObstacle
     }
     int16_t cal_obs_num = 0;
     float velocity;
-    float cul_time = 0.8;
+    float cul_time = 1.0;
     vx = vx * cul_time;
     vy = vy * cul_time;
     float cul_time_4 = cul_time*cul_time*cul_time*cul_time;
@@ -684,7 +697,7 @@ void cul_obs(int32_t x, int32_t y, int32_t vx, int32_t vy, int32_t numOfObstacle
         c1 = -2 * (vx * vx + vy * vy);
     }
     float robot_circle = velocity * cul_time - 0.5 * robot_max_accel * cul_time*cul_time;
-    for (int i = 0; i < numOfObstacle; i++)
+    for (int32_t i = 0; i < numOfObstacle; i++)
     {
         float obstacle_check = ((ObstacleX[i] - (x + vx)) * (ObstacleX[i] - (x + vx)) + (ObstacleY[i] - (y + vy)) * (ObstacleY[i] - (y + vy))) * (4 / (robot_max_accel * robot_max_accel * cul_time_4));
         if (obstacle_check < 1 && robot_circle <= 0)
@@ -706,7 +719,23 @@ void cul_obs(int32_t x, int32_t y, int32_t vx, int32_t vy, int32_t numOfObstacle
         {
             float c2 = (ObstacleX[i] - x) * (vy - vx) - (vx + vy) * (ObstacleY[i] - y);
             float c3 = (vx - vy) * (ObstacleY[i] - y) - (vx + vy) * (ObstacleX[i] - x);
-            if ((c2 + c3) / c1 <= 1)
+            float c_check = (c2 + c3) / c1;
+            if (0 < c_check && c_check <= 1 && 0 < c1*c2 && 0 < c1*c3)
+            {
+                obs_imfo[cal_obs_num].x = ObstacleX[i];
+                obs_imfo[cal_obs_num].y = ObstacleY[i];
+                obs_imfo[cal_obs_num].vx = ObstacleVX[i];
+                obs_imfo[cal_obs_num].vy = ObstacleVY[i];
+                obs_imfo[cal_obs_num].ax = ObstacleAX[i];
+                obs_imfo[cal_obs_num].ay = ObstacleAY[i];
+                obs_imfo[cal_obs_num].radius = ROBOT_SIZE * 0.5;
+                cal_obs_num++;
+                if (obs_size <= cal_obs_num)
+                {
+                    break;
+                }
+            }
+            else if(sqrtf((ObstacleX[i] - x)*(ObstacleX[i] - x) + (ObstacleY[i] - y)*(ObstacleY[i] - y)) < (ROBOT_SIZE + MARGIN_DISTANCE))
             {
                 obs_imfo[cal_obs_num].x = ObstacleX[i];
                 obs_imfo[cal_obs_num].y = ObstacleY[i];
@@ -740,7 +769,7 @@ float obstacle(float path_x[], float path_y[], uint16_t size, int16_t obs_size, 
         robot_target_dis = sqrtf((path_x[0] - targetX) * (path_x[0] - targetX) + (path_y[0] - targetY) * (path_y[0] - targetY));
         int8_t cal_step_devide = 1;
         uint16_t size_max = size + 1;
-        for (int i = 0; i < size_max; i++)
+        for (uint16_t i = 0; i < size_max; i++)
         {
             float target_predict_dis = 0;
             float deg_robto_target_predit = 0.0;
@@ -755,7 +784,7 @@ float obstacle(float path_x[], float path_y[], uint16_t size, int16_t obs_size, 
                 {
                     for (int k = 0; k < cal_step_devide; k++)
                     {
-                        float time = TIME_STEP * (i + k / cal_step_devide);
+                        float time = DWA_CAL_TIME_STEP * (i + k / cal_step_devide);
                         //障害物のロボットの位置計算
                         float obs_x = obs_imfo[j].x + obs_imfo[j].vx * time + 0.5 * obs_imfo[j].ax * time * time;
                         float obs_y = obs_imfo[j].y + obs_imfo[j].vy * time + 0.5 * obs_imfo[j].ay * time * time;
@@ -795,12 +824,13 @@ float obstacle(float path_x[], float path_y[], uint16_t size, int16_t obs_size, 
             }
         }
     }
+    //printf("%f\n",score_obstacle);
     score_obstacle = score_obstacle - (ROBOT_SIZE + MARGIN_DISTANCE);
     return score_obstacle;
 }
 // DWAのパスを使うべきか否かの判定
 bool path_enable_check(int32_t x, int32_t y, int32_t Vx, int32_t Vy, int32_t targetX, int32_t targetY, int32_t output_vx, int32_t output_vy, int32_t output_ax, int32_t output_ay, obs obs_imfo[], int16_t obs_size,
-                       uint32_t fine_path_predict_step, bool prohidited_zone_ignore, bool midle_target_flag, bool ollision_flag, bool pre_path_enable_flag, bool prohidited_zone_start)
+                       uint32_t fine_path_predict_step, bool prohidited_zone_ignore, bool midle_target_flag, bool collision_flag, bool pre_path_enable_flag, bool prohidited_zone_start)
 {
     bool path_enable = 1;
     float distance = 0;
@@ -818,6 +848,9 @@ bool path_enable_check(int32_t x, int32_t y, int32_t Vx, int32_t Vy, int32_t tar
     {
         accel = sqrtf(output_ax * output_ax + output_ay * output_ay);
     }
+    if(distance < DWA_TRAP_CHANGE_DIS){
+        path_enable = 0;
+    }
     float predict_distance = (2 * velocity - accel * (float)fine_path_predict_step * 0.1) * ((float)fine_path_predict_step * 0.1) * 0.5;
     if (distance != 0 && accel != 0)
     {
@@ -832,15 +865,8 @@ bool path_enable_check(int32_t x, int32_t y, int32_t Vx, int32_t Vy, int32_t tar
             // else if((vel_accel_diff_deg < -180 + GNORE_ANGLE2 || 180 - GNORE_ANGLE2 < vel_accel_diff_deg)){//目標値付近で目標値と反対方向に加速度がある時は台形制御
             path_enable = 0;
         }
-        else
-        {
-            path_enable = 1;
-        }
     }
-    else
-    {
-        path_enable = 1;
-    }
+
     float deg_change = -(velocity* 0.001) * 5 + 5;
     if (deg_change < 5)
     {
@@ -855,18 +881,14 @@ bool path_enable_check(int32_t x, int32_t y, int32_t Vx, int32_t Vy, int32_t tar
         {
             path_enable = 0;
         }
-        else
-        {
-            path_enable = 1;
-        }
     }
-    //中間目標点の場合，壁に衝突する場合は台形制御をしない
+    //速度が遅い場合は台形制御をする
     float robot_velocity = 0;
     if (Vx * Vx + Vy * Vy != 0)
     {
         robot_velocity = sqrtf(Vx * Vx + Vy * Vy);
     }
-    if (robot_velocity <= 50)
+    if (robot_velocity <= 100)
     {
         path_enable = 0;
     }
@@ -878,9 +900,9 @@ bool path_enable_check(int32_t x, int32_t y, int32_t Vx, int32_t Vy, int32_t tar
         trapezoidal_init(&trape_c);
         trapezoidal_DWA_change(x, y, Vx, Vy, &trape_c, targetX, targetY, (float)output_ax, (float)output_ay);
         bool finish_flag = 0;
-        for (int i = 0; i < 50; i++)
+        for (int i = 0; i < 20; i++)
         {                                                    // 2秒間の台形制御の軌道を推定し他のロボットと衝突しないか確認する
-            trapezoidal_control(targetX, targetY, &trape_c); // time stepは100ms
+            trapezoidal_control(targetX, targetY, &trape_c); // time stepは40ms
             for (int j = 0; j < obs_size; j++)
             {
                 float obs_x = obs_imfo[j].x + obs_imfo[j].vx * TRAP_TIME_STEP * i + 0.5 * obs_imfo[j].ax * TRAP_TIME_STEP * i * TRAP_TIME_STEP * i;
@@ -909,13 +931,9 @@ bool path_enable_check(int32_t x, int32_t y, int32_t Vx, int32_t Vy, int32_t tar
         { //目標値と現在地が近く台形制御に入っている場合
             path_enable = 0;
         }
-        else
-        {
-            path_enable = 1;
-        }
     }
     //中間目標地点，ペナルティゾーンからスタートする，フィールド外壁に衝突する場合は台形制御を使用しない
-    if (prohidited_zone_start == 1 || midle_target_flag == 1 || ollision_flag == 1)
+    if (prohidited_zone_start == 1 || midle_target_flag == 1 || collision_flag == 1)
     {
         path_enable = 1;
     }
@@ -924,11 +942,11 @@ bool path_enable_check(int32_t x, int32_t y, int32_t Vx, int32_t Vy, int32_t tar
 //ペナルティゾーンへの侵入やフィールド外に行くパスを確認してフラグを付与する(long path用)
 void field_out_penalty_zone_long_path_check(path_long_prediction *long_prediction, uint16_t path_size, uint32_t long_path_predict_step, bool prohidited_zone_start, bool prohidited_zone_ignore)
 {
-    for (int i = 0; i < path_size; i++)
+    for (uint16_t i = 0; i < path_size; i++)
     {
         for (int k = 0; k < long_path_predict_step; k++)
         {
-            if (field_penalty_zone_check(long_prediction[i].x[k], long_prediction[i].y[k], prohidited_zone_ignore, x_penalty_line_puls, x_penalty_line_minus, y_penalty_line_puls, y_penalty_line_minus) == 1 && prohidited_zone_start == 0)
+            if (field_penalty_zone_check(long_prediction[i].x[k], long_prediction[i].y[k], prohidited_zone_ignore, dwa_x_penalty_line_puls, dwa_x_penalty_line_minus, dwa_y_penalty_line_puls, dwa_y_penalty_line_minus) == 1 && prohidited_zone_start == 0)
             {
                 long_prediction[i].availability_flag = 1;
                 break;
@@ -939,11 +957,11 @@ void field_out_penalty_zone_long_path_check(path_long_prediction *long_predictio
 //ペナルティゾーンへの侵入やフィールド外に行くパスを確認してフラグを付与する(fine path用)
 void field_out_penalty_zone_fine_path_check(path_fine_prediction *fine_prediction, uint16_t path_size, uint32_t fine_path_predict_step, bool prohidited_zone_start, bool prohidited_zone_ignore)
 {
-    for (int i = 0; i < path_size; i++)
+    for (uint16_t i = 0; i < path_size; i++)
     {
         for (int k = 0; k < fine_path_predict_step; k++)
         {
-            if (field_penalty_zone_check(fine_prediction[i].x[k], fine_prediction[i].y[k], prohidited_zone_ignore, x_penalty_line_puls, x_penalty_line_minus, y_penalty_line_puls, y_penalty_line_minus) == 1 && prohidited_zone_start == 0)
+            if (field_penalty_zone_check(fine_prediction[i].x[k], fine_prediction[i].y[k], prohidited_zone_ignore, dwa_x_penalty_line_puls, dwa_x_penalty_line_minus, dwa_y_penalty_line_puls, dwa_y_penalty_line_minus) == 1 && prohidited_zone_start == 0)
             {
                 fine_prediction[i].availability_flag = 1;
                 break;
@@ -963,34 +981,34 @@ bool DWA_enable_check(int8_t long_path_availability_flag, int8_t fine_path_avail
         return 1;
     }
 }
-//制動距離を算出して壁に激突しないか判定する
-void avoid_field_wall_ollision(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy, int32_t omega, path_fine_prediction *opt_path, uint32_t fine_path_predict_step, bool *ollision_flag)
+//制動距離を算出してフィールド壁への激突を回避する
+void avoid_field_wall_collision(int32_t x, int32_t y, int32_t theta, int32_t Vx, int32_t Vy, int32_t omega, path_fine_prediction *opt_path, uint32_t fine_path_predict_step, bool *collision_flag)
 {
     float x_stop = (float)x + *opt_path->vx * *opt_path->vx * *opt_path->vx / (2 * robot_max_accel * fabs(*opt_path->vx));
     float y_stop = (float)y + *opt_path->vy * *opt_path->vy * *opt_path->vy / (2 * robot_max_accel * fabs(*opt_path->vy));
-    if (x_stop <= x_outside_line_minus - FIELD_OUT_LINE + ROBOT_SIZE * 0.5 + FIELD_MARGIN)
+    if (x_stop <= dwa_x_outside_line_minus - FIELD_OUT_LINE + ROBOT_SIZE * 0.5 + FIELD_MARGIN)
     {
         opt_path->accel_derection = 0;
         opt_path->accel = robot_max_accel;
-        *ollision_flag = 1;
+        *collision_flag = 1;
     }
-    else if (x_outside_line_puls + FIELD_OUT_LINE - ROBOT_SIZE * 0.5 - FIELD_MARGIN <= x_stop)
+    else if (dwa_x_outside_line_puls + FIELD_OUT_LINE - ROBOT_SIZE * 0.5 - FIELD_MARGIN <= x_stop)
     {
         opt_path->accel_derection = 180;
         opt_path->accel = robot_max_accel;
-        *ollision_flag = 1;
+        *collision_flag = 1;
     }
-    if (y_stop <= y_outside_line_minus - FIELD_OUT_LINE + ROBOT_SIZE * 0.5 + FIELD_MARGIN)
+    if (y_stop <= dwa_y_outside_line_minus - FIELD_OUT_LINE + ROBOT_SIZE * 0.5 + FIELD_MARGIN)
     {
         opt_path->accel_derection = 90;
         opt_path->accel = robot_max_accel;
-        *ollision_flag = 1;
+        *collision_flag = 1;
     }
-    else if (y_outside_line_puls + FIELD_OUT_LINE - ROBOT_SIZE * 0.5 - FIELD_MARGIN <= y_stop)
+    else if (dwa_y_outside_line_puls + FIELD_OUT_LINE - ROBOT_SIZE * 0.5 - FIELD_MARGIN <= y_stop)
     {
         opt_path->accel_derection = 270;
         opt_path->accel = robot_max_accel;
-        *ollision_flag = 1;
+        *collision_flag = 1;
     }
     float angle_deg = angle_range_corrector_deg(opt_path->accel_derection);
     float angle = angle_deg * DEG_TO_RAD;
@@ -998,6 +1016,20 @@ void avoid_field_wall_ollision(int32_t x, int32_t y, int32_t theta, int32_t Vx, 
     float accel_x = opt_path->accel * cosf(angle);
     float accel_y = opt_path->accel * sinf(angle);
     predict_robot_fine_path(x, y, theta, Vx, Vy, omega, opt_path, accel_x, accel_y, fine_path_predict_step);
+}
+//障害物が至近距離がある緊急場合回避する
+void avoid_obstacle_collision(int32_t x, int32_t y, int16_t obs_size, obs obs_imfo[], path_fine_prediction *opt_path, uint32_t fine_path_predict_step, bool *collision_flag){
+    for(int16_t i = 0; i < obs_size; i++){
+        float obs_distance = sqrtf((x - obs_imfo[i].x)*(x - obs_imfo[i].x)+(y - obs_imfo[i].y)*(y - obs_imfo[i].y));
+        if(obs_distance < ROBOT_SIZE + OBS_EMERGENCY_MARGIN_DISTANCE){
+            //float avoid_derectio_rad = atan2f(y - obs_imfo[i].y, x - obs_imfo[i].x);
+            float avoid_derectio_rad = atan2f(y - obs_imfo[i].y, x - obs_imfo[i].x);
+            opt_path->accel_derection = angle_range_corrector_deg(avoid_derectio_rad * RAD_TO_DEG);
+            opt_path->accel = robot_max_accel;
+            *collision_flag = 1;
+            break;
+        }
+    }
 }
 //中間目標点が設置されている時のロボットの速度制限(long path用)
 void midle_target_velo_limit_long_path(int32_t x, int32_t y, int32_t Vx, int32_t Vy, int32_t targetX, int32_t targetY, int32_t midle_targetX, int32_t midle_targetY,
@@ -1057,7 +1089,7 @@ void midle_target_velo_limit_long_path(int32_t x, int32_t y, int32_t Vx, int32_t
         float dif_velo = robot_velo_to_midle_target - robot_velo_limit;
         float controll_time = 0.05;
         int8_t controll_step = 1;
-        for (int i = 0; i < path_size; i++)
+        for (int16_t i = 0; i < path_size; i++)
         {
             // float accel_deg = M_PI*5.0/180;
             float accel_deg = 0;
@@ -1133,7 +1165,7 @@ void midle_target_velo_limit_fine_path(int32_t x, int32_t y, int32_t Vx, int32_t
         float dif_velo = robot_velo_to_midle_target - robot_velo_limit;
         float controll_time = 0.1;
         float accel_deg_check = RAD_TO_DEG * modifid_acosf(dif_velo / (2000 * controll_time));
-        for (int i = 0; i < path_size; i++)
+        for (int16_t i = 0; i < path_size; i++)
         {
             // float accel_rad = M_PI*5.0/180;
             float accel_rad = 0;

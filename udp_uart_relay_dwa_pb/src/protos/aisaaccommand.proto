@@ -22,8 +22,9 @@ message Acceleration {
 message Obstacle {
   int32 x = 1;
   int32 y = 2;
-  int32 vx = 3;
-  int32 vy = 4;
+  int32 theta = 3;
+  int32 vx = 4;
+  int32 vy = 5;
 }
 
 message Kick {
@@ -39,20 +40,21 @@ message Kick {
     Straight = 1;
   }
 
-  KickType sensor_type = 1;
-  KickMethod kick_method = 2;
-  int32 kick_strength = 3;
-  Position ball_waypoint = 4;
-  Position ball_pos = 5;
-  Velocity ball_vel = 6;
+  KickType sensor_type = 1; // ball kick state
+  KickMethod kick_method = 2; // ball kick 
+  int32 kick_power = 3;
+  bool ball_kick_active = 4;
+  bool free_kick_flag = 5;
+  Position ball_goal = 6;
+  int32 ball_target_allowable_error = 7;
 }
 
-message DwaResult {
-  int32 vx = 1;
-  int32 vy = 2;
-  int32 omega = 3;
-  int32 ax = 4;
-  int32 ay = 5;
+message Dribble {
+  double dribble_power = 1; // double
+  bool dribble_state = 2; // Dribble flag
+  bool dribbler_active = 3; // Force rotate drribler
+  Position dribble_goal = 4;
+  int32 dribble_complete_distance = 5;
 }
 
 enum RobotCommandCoordinateSystemType {
@@ -64,39 +66,27 @@ enum RobotCommandCoordinateSystemType {
 // StrategyPC -> RasPi
 // RasPi -> STM32
 message SpcCommand {
-  Position current_pos = 1;
-  Velocity move_vec = 2;
-  Position target_pos = 3;
-  repeated Obstacle obstacles = 4;
-  Kick kick = 5;
-  bool prohibited_zone_ignore = 6;
-  RobotCommandCoordinateSystemType robot_command_coordinate_system_type = 7;
-  bool vision_data_valid = 8;
+  RobotCommandCoordinateSystemType robot_command_type = 1;
+  Position goal_pose = 2;
+  bool prohibited_zone_ignore = 3;
+  bool middle_target_flag = 4;
+  Position middle_goal_pose = 5;
+  Dribble dribble = 6;
+  Kick kick = 7;
 }
 
 // DWA Result
 // RasPi -> STM32
 message RaspiCommand {
-  Position target_pos = 1;
-  bool dwa_result_valid = 2;
-  bool path_enable = 3;
-  DwaResult dwa_result = 4;
+  RobotCommandCoordinateSystemType robot_command_type = 1;
+  Velocity goal_pose_velocity = 2;
+  Dribble dribble = 3;
+  Kick kick = 4;
 }
 
-message RobotState {
-  Position current_pos = 1;
-  Velocity current_vel = 2;
-  Acceleration current_accel = 3;
-} 
-
-message AIsaacCommand {
-  int32 robot_command_coordinate_system_type = 1;
-  int32 target_x = 2;
-  int32 target_y = 3;
-  int32 target_angle = 4;
-  bool vision_data_valid = 5;
-  int32 current_x = 6;
-  int32 current_y = 7;
-  int32 current_angle = 8;
-  Kick kick = 9;
+// Vision Data
+message VisionData {
+  Position own_machine_position = 1;
+  Position ball_position = 2;
+  repeated Obstacle obstacles = 3;
 }

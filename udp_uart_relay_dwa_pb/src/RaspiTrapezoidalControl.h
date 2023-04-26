@@ -1,8 +1,11 @@
-#ifndef _TRAPEZOIDALCONTROL_H_
-#define _TRAPEZOIDALCONTROL_H_
+#ifndef _RSPI_TRAPEZOIDALCONTROL_H_
+#define _RSPI_TRAPEZOIDALCONTROL_H_
 
-#define TRAP_TIME_STEP 0.04
+#define TRAP_TIME_STEP 0.04     //execDWA時に台形制御かDWAかを判断するために使用する
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 //構造体
 //ロボットの状態を保存する構造体
 typedef struct{
@@ -37,5 +40,7 @@ void trapezoidal_control(int32_t targetX, int32_t targetY, trape_con *trape_c);
 //台形制御の係数初期化
 void trapezoidal_init(trape_con *trape_c);
 
-
-#endif // _TRAPEZOIDALCONTROL_H_
+#ifdef __cplusplus
+}
+#endif
+#endif // _RSPI_TRAPEZOIDALCONTROL_H_

@@ -2,17 +2,14 @@
 #include<stdbool.h>
 #include<stdio.h>
 #include<stdlib.h>
-#include <unistd.h>
+#include<unistd.h>
 #include<math.h>
 #include "RaspiTrapezoidalControl.h"
+#include "tools.h"
 
 #include <time.h>
 
 //int test_time_step = 0;
-
-float trap_max_velo = 3000; //ロボットの最大速度(mm/s)
-float trap_max_accel = 1500; //ロボットの最大速度(mm/s^2)
-float robot_jerk = 4000;        //ロボットの躍度(mm/s^3)
 
 bool trapezoidal_DWA_change(int32_t x, int32_t y, int32_t vx, int32_t vy, trape_con *trape_c, int32_t targetX, int32_t targetY, float ax, float ay){
     float distance;
@@ -93,13 +90,13 @@ void trapezoidal_control(int32_t targetX, int32_t targetY, trape_con *trape_c){
     }
     //目標から離れていく方向に速度を持っている場合
     else if(trape_c->velocity < 0 && trape_c->accel < 0){
-        jerk_flag = 3;
+        jerk_flag = 50;
         //printf("1 %d\n", jerk_flag);
     }
     else if(trape_c->velocity < 0 && 0 <= trape_c->accel){
         float in_sqrt = trape_c->accel*trape_c->accel + 2*trape_c->jerk*trape_c->velocity;
         if(in_sqrt < 0){
-            jerk_flag = 3;
+            jerk_flag = 50;
             //printf("2, %d\n", jerk_flag);
         }
         else{
@@ -112,7 +109,7 @@ void trapezoidal_control(int32_t targetX, int32_t targetY, trape_con *trape_c){
             float braking_distance = positive_braking_distance - negative_braking_distance;
             jerk_flag = jerk_flag_check(distance, braking_distance);
             if(jerk_flag == 1){
-                jerk_flag = 3;
+                jerk_flag = 50;
             }
             //printf("3 %d\n", jerk_flag);
         }
@@ -166,11 +163,11 @@ void trapezoidal_control(int32_t targetX, int32_t targetY, trape_con *trape_c){
 }
 
 void trapezoidal_init(trape_con *trape_c){
-    trape_c->jerk = robot_jerk;
+    trape_c->jerk = ROBOT_MAX_JARK;
     trape_c->accel = 0;
-    trape_c->max_accel = trap_max_accel;
+    trape_c->max_accel = ROBOT_MAX_ACCEL;
     trape_c->velocity = 0;
-    trape_c->max_velocity = trap_max_velo;
+    trape_c->max_velocity = ROBOT_MAX_VEL;
     trape_c->virtual_x = 0;
     trape_c->virtual_y = 0;
 }
