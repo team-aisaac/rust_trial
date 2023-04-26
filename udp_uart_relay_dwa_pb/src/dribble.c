@@ -7,13 +7,13 @@
 #include <math.h>
 #include <time.h>
 
-#include "robot_controller/tools.h"
-#include "robot_controller/dribble_include/dribble.h"
-#include "robot_controller/ball_wrap_kick_include/wrap_kick.h"
+#include "tools.h"
+#include "dribble.h"
+#include "wrap_kick.h"
 //#include "robot_controller/ball_wrap_kick_include/wrap_kick.h"
 //ros2デバッグ用のヘッダファイル
-#include "/opt/ros/foxy/include/rcutils/logging_macros.h"
-#include "/opt/ros/foxy/include/rcutils/logging.h"
+// #include "/opt/ros/foxy/include/rcutils/logging_macros.h"
+// #include "/opt/ros/foxy/include/rcutils/logging.h"
 
 bool dribble_wrap_motion(wrap_kick_robot robot, wrap_kick_ball ball, wrap_motion_pid *pid, int32_t ball_target_allowable_error, bool dribble_ball_move_flag, bool *dribble_active){
     float w_robot_rad = angle_range_corrector(robot.w_robot_theta/1000 * DEG_TO_RAD); //rad

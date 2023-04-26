@@ -4,13 +4,13 @@
 #include<stdlib.h>
 #include <unistd.h>
 #include<math.h>
-#include "robot_controller/dwa_include/TrapezoidalControl.h"
-#include "robot_controller/tools.h"
+#include "TrapezoidalControl.h"
+#include "tools.h"
 
 #include <time.h>
 
-#include "/opt/ros/foxy/include/rcutils/logging_macros.h"
-#include "/opt/ros/foxy/include/rcutils/logging.h"
+// #include "/opt/ros/foxy/include/rcutils/logging_macros.h"
+// #include "/opt/ros/foxy/include/rcutils/logging.h"
 
 //int test_time_step = 0;
 

@@ -126,7 +126,7 @@ extern "C" {
         circumferential_error: * mut f64,
         radius_error: * mut f64,
         goal_theta: * mut f64,
-        ball_kick_con_flag: * const bool,
+        ball_kick_con_flag: * mut bool,
         robot_id: u32,
         kick_con_max_velocity_theta: * mut f32,
         free_kick_flag: bool,
@@ -146,10 +146,10 @@ extern "C" {
         r_ball: State,
         my_robot: TrackedRobot,
         next_goal_pose: * mut State,
-        dribble_con_flag: * const bool,
+        dribble_con_flag: * mut bool,
         robot_id: u32,
         dribble_complete_distance: i32,
-        dribble_trape_c: * const MiconTrapeCon,
+        dribble_trape_c: * mut MiconTrapeCon,
         dribble_ball_move_flag: * const bool,
         circumferential_error: * mut f64,
         radius_error: * mut f64,
@@ -159,7 +159,7 @@ extern "C" {
         ob_unit_vec_radius_y: * mut f32,
         dribble_active: * mut bool);
 
-    fn device_next_goal_xy(
+    fn decide_next_goal_xy(
         goal_pose: State,
         middle_goal_pose: * mut State,
         next_goal_pose: * mut State,
@@ -168,8 +168,8 @@ extern "C" {
         robot_id: u32,
         my_robot: TrackedRobot,
         team_is_yellow: bool,
-        trape_control_flag: * const bool,
-        trape_c: * const MiconTrapeCon);
+        trape_control_flag: * mut bool,
+        trape_c: * mut MiconTrapeCon);
 }
 
 fn escape_for_serial(input: u8, out: &mut Vec<u8>) {
@@ -351,7 +351,7 @@ fn main() -> std::io::Result<()> {
 
                                 // fn robot_wrap_kick
                                 unsafe {
-                                    robot_wrap_kick(&mut next_goal_pose, ball, r_ball, ball_goal, my_robot, &mut circumferential_error, &mut radius_error, &mut goal_theta, ball_kick_con_flag.as_ptr(), robot_id, &mut kick_con_max_velocity_theta, free_kick_flag, ball_target_allowable_error, ball_kick, &mut ball_kick_con, &mut ob_unit_vec_circumferential_x, &mut ob_unit_vec_circumferential_y, &mut ob_unit_vec_radius_x, &mut ob_unit_vec_radius_y, &mut wrap_kick_xy_flag, &mut dribble_active);
+                                    robot_wrap_kick(&mut next_goal_pose, ball, r_ball, ball_goal, my_robot, &mut circumferential_error, &mut radius_error, &mut goal_theta, ball_kick_con_flag.as_mut_ptr(), robot_id, &mut kick_con_max_velocity_theta, free_kick_flag, ball_target_allowable_error, ball_kick, &mut ball_kick_con, &mut ob_unit_vec_circumferential_x, &mut ob_unit_vec_circumferential_y, &mut ob_unit_vec_radius_x, &mut ob_unit_vec_radius_y, &mut wrap_kick_xy_flag, &mut dribble_active);
                                 }
 
                                 if dribble_active {
@@ -391,7 +391,7 @@ fn main() -> std::io::Result<()> {
 
                                 // fn dribble
                                 unsafe {
-                                    dribble(dribble_goal, ball, r_ball, my_robot, &mut next_goal_pose, dribble_con_flag.as_ptr(), robot_id, dribble_complete_distance, dribble_trape_c.as_ptr(), dribble_ball_move_flag.as_ptr(), &mut circumferential_error, &mut radius_error, &mut ob_unit_vec_circumferential_x, &mut ob_unit_vec_circumferential_y, &mut ob_unit_vec_radius_x, &mut ob_unit_vec_radius_y, &mut dribble_active);
+                                    dribble(dribble_goal, ball, r_ball, my_robot, &mut next_goal_pose, dribble_con_flag.as_mut_ptr(), robot_id, dribble_complete_distance, dribble_trape_c.as_mut_ptr(), dribble_ball_move_flag.as_mut_ptr(), &mut circumferential_error, &mut radius_error, &mut ob_unit_vec_circumferential_x, &mut ob_unit_vec_circumferential_y, &mut ob_unit_vec_radius_x, &mut ob_unit_vec_radius_y, &mut dribble_active);
                                 }
 
                                 if dribble_active {
@@ -425,7 +425,7 @@ fn main() -> std::io::Result<()> {
                             // 算出された目標点まで移動するために、次のループまでの目標点を決定する
                             // fn decide_next_goal_xy
                             unsafe {
-                                device_next_goal_xy(goal_pose, &mut middle_goal_pose, &mut next_goal_pose, prohibited_zone_ignore, &mut  middle_target_flag, robot_id, my_robot, team_is_yellow, trape_control_flag.as_ptr(), trape_c.as_ptr());
+                                decide_next_goal_xy(goal_pose, &mut middle_goal_pose, &mut next_goal_pose, prohibited_zone_ignore, &mut  middle_target_flag, robot_id, my_robot, team_is_yellow, trape_control_flag.as_mut_ptr(), trape_c.as_mut_ptr());
                             }
                         }
 
@@ -533,7 +533,7 @@ fn main() -> std::io::Result<()> {
                         // unsafe {
                         //     execDWA(robot_state.current_pos.x, robot_state.current_pos.y, robot_state.current_pos.theta, robot_state.current_vel.vx, robot_state.current_vel.vy, robot_state.current_vel.omega, &mut target_x, &mut target_y, target_theta, &mut mid_tx, &mut mid_ty, number_of_obstacles, obstacle_x.as_ptr(), obstacle_y.as_ptr(), obstacle_vx.as_ptr(), obstacle_vy.as_ptr(), prohibited_zone_ignore, false, &mut dwa_result_valid, &mut path_enable, &mut prohibited_zone_start, &mut vx_out, &mut vy_out, &mut omega_out, &mut ax_out, &mut ay_out);
                         // }
-
+ 
                         // let mut target_pos = protos::aisaaccommand::Position::new();
                         // target_pos.x = target_x;
                         // target_pos.y = target_y;

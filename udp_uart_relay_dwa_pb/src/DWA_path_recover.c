@@ -3,8 +3,8 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<math.h>
-#include"robot_controller/dwa_include/DWA_path_recover.h"
-#include "robot_controller/tools.h"
+#include "DWA_path_recover.h"
+#include "tools.h"
 
 void DWA_path_recover(float *x, float *y, float *vx, float *vy, float accel_x, float accel_y, float max_velo){
     *vx = *vx + accel_x*MICON_TIME_STEP;

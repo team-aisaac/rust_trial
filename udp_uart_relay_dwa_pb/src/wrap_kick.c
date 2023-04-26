@@ -7,11 +7,11 @@
 #include <math.h>
 #include <time.h>
 
-#include "robot_controller/tools.h"
-#include "robot_controller/ball_wrap_kick_include/wrap_kick.h"
+#include "tools.h"
+#include "wrap_kick.h"
 //ros2デバッグ用のヘッダファイル
-#include "/opt/ros/foxy/include/rcutils/logging_macros.h"
-#include "/opt/ros/foxy/include/rcutils/logging.h"
+// #include "/opt/ros/foxy/include/rcutils/logging_macros.h"
+// #include "/opt/ros/foxy/include/rcutils/logging.h"
 
 /*
 void wrap_kick(int32_t w_robot_x, int32_t w_robot_y, int32_t w_robot_theta, int32_t w_robot_omega, int32_t w_ball_x, int32_t w_ball_y, int32_t w_ball_vx, int32_t w_ball_vy, 
@@ -172,7 +172,7 @@ bool ball_kick_check(wrap_kick_robot robot, wrap_kick_ball ball, int32_t ball_ta
                 float ball_ball_target_vectot_robot_vctor_rad 
                     = modifid_acosf(((ball.target_ball_x - ball.w_ball_x)*cosf(robot_rad) + (ball.target_ball_y - ball.w_ball_y)*sinf(robot_rad))/ball_ball_target_distance);
                 //RCUTILS_LOG_INFO("threshold : %f", threshold_ball_kick_rad*RAD_TO_DEG);
-                RCUTILS_LOG_INFO("diff angle : %f", ball_ball_target_vectot_robot_vctor_rad*RAD_TO_DEG);
+                // RCUTILS_LOG_INFO("diff angle : %f", ball_ball_target_vectot_robot_vctor_rad*RAD_TO_DEG);
                 if(ball_ball_target_vectot_robot_vctor_rad < threshold_ball_kick_rad){
                     //RCUTILS_LOG_INFO("ball kick");
                     return true;

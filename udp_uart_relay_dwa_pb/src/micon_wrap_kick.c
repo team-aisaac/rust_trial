@@ -7,9 +7,9 @@
 #include <math.h>
 #include <time.h>
 
-#include "robot_controller/tools.h"
-#include "robot_controller/ball_wrap_kick_include/micon_wrap_kick.h"
+#include "tools.h"
+#include "micon_wrap_kick.h"
 //ros2デバッグ用のヘッダファイル
-#include "/opt/ros/foxy/include/rcutils/logging_macros.h"
-#include "/opt/ros/foxy/include/rcutils/logging.h"
+// #include "/opt/ros/foxy/include/rcutils/logging_macros.h"
+// #include "/opt/ros/foxy/include/rcutils/logging.h"
 
