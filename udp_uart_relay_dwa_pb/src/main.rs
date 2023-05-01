@@ -89,34 +89,6 @@ struct MiconTrapeCon {
 }
 
 extern "C" {
-    // fn hello_world();
-    // fn execDWA(x: i32,
-    //            y: i32,
-    //            theta: i32,
-    //            Vx: i32,
-    //            Vy: i32,
-    //            omega: i32,
-    //            targetX: * mut i32,
-    //            targetY: * mut i32,
-    //            targetTheta: i32,
-    //            middle_targetX: * mut i32,
-    //            middle_targetY: * mut i32,
-    //            numberOfObstacle: i32,
-    //            ObstacleX: *const i32,
-    //            ObstacleY: *const i32,
-    //            ObstacleVX: *const i32,
-    //            ObstacleVY: *const i32,
-    //            prohibited_zone_ignore: bool,
-    //            middle_target_flag: bool,
-    //            dwa_result_valid: * mut bool,
-    //            path_enable: * mut bool,
-    //            prohibited_zone_start: * mut bool,
-    //            vx_out: * mut i32,
-    //            vy_out: * mut i32,
-    //            omega_out: * mut i32,
-    //            ax_out: * mut i32,
-    //            ay_out: * mut i32);
-
     fn robot_wrap_kick(
         next_goal_pose: * mut State,
         ball: TrackedBall,
@@ -244,19 +216,6 @@ fn main() -> std::io::Result<()> {
     let mut ball = TrackedBall { pos: Vector3 { x: 0.0, y: 0.0, theta: 0.0 }, vel: Vector3 { x:0.0, y: 0.0, theta: 0.0 }, visibility: 0.0 };
     // Variables for DWA
     let mut current_position = Position { x: 0, y: 0, theta: 0 };
-    // let mut pid_last_update_time = Instant::now();
-    // let mut pre_position_pid = false;
-    // let mut pid_velocity = Position { x: 0, y: 0, theta: 0 };
-    // let mut world_velocity = F32Position { x: 0.0, y: 0.0, theta: 0.0 };
-    // let mut last_world_velocity = F32Position { x: 0.0, y: 0.0, theta: 0.0 };
-    // let mut pre_ball_wrap_pid = false;
-    // let mut pid_wrap_radius = 0.0;
-    // let mut pid_wrap_circumferntial = 0.0;
-    // let mut pre_radius_v = 0.0;
-    // let mut pre_circumferential_v = 0.0;
-    // let max_velocity_xy_ = 0;
-    // let mut goal_handle_ = false;
-    // let mut max_velocity_theta_ = false;
 
     let mut r_ball = State { x: 0.0, y: 0.0, theta: 0.0 };
     let mut ball_goal = State { x: 0.0, y: 0.0, theta: 0.0 };
@@ -429,7 +388,6 @@ fn main() -> std::io::Result<()> {
                             }
                         }
 
-
                         let _command_to_stm32 = protos::aisaaccommand::RaspiCommand::new();
                         // dribble_power;
                         // kick_power;
@@ -451,108 +409,6 @@ fn main() -> std::io::Result<()> {
                         escape_for_serial(check_sum, &mut escaped_buf);     // Checksum
                         uart.write(&escaped_buf).expect("couldn't send uart");
 
-                        // // PID制御
-                        // let current_time = Instant::now();  // PID制御のための時間計測
-                        // let duration = current_time.duration_since(dwa_last_update_time);
-                        // if position_pid {
-                        //     if !pre_position_pid {
-                        //         pid_velocity.x = 0;
-                        //         pid_velocity.y = 0;
-                        //     }
-
-                        //     world_velocity.x = pid_velocity.x as f32;   // PID
-                        //     world_velocity.y = pid_velocity.y as f32;   // PID
-                        //     world_velocity.theta = pid_velocity.theta as f32;   // PID
-
-                        // } else if ball_wrap_pid {
-                        //     if !pre_ball_wrap_pid {
-                        //         pid_wrap_radius = 0.0;
-                        //         pid_wrap_circumferntial = 0.0;
-                        //     }
-
-                        //     let radius_v = pid_wrap_radius; // PID
-                        //     let circumfential_v = pid_wrap_circumferntial;  // PID
-
-                        //     let radius_accel = (pre_radius_v - radius_v).abs() / duration.as_secs_f32();
-                        //     let circumferential_accel = (circumfential_v - pre_circumferential_v).abs() / duration.as_secs_f32();
-                        //     pre_radius_v = radius_v;
-                        //     pre_circumferential_v = circumfential_v;
-
-                        //     world_velocity.x = radius_v * ob_unit_vec_radius_x + circumfential_v * ob_unit_vec_circumferential_x;
-                        //     world_velocity.y = radius_v * ob_unit_vec_radius_y + circumfential_v * ob_unit_vec_circumferential_y;
-                        //     world_velocity.theta = 0.0; // PID
-                        // }
-
-                        // // 最大速度リミットを適用
-                        // let max_velocity_xy = max_velocity_xy_;
-                        // // 最大速度リミットを上書きできる
-                        // if goal_handle_ {
-                        //     if goal_handle_
-                        // }
-                        // //   std::vector<std::shared_ptr<GoalHandleRobotControl>> goal_handle_;
-                        // // sing GoalHandleRobotControl = rclcpp_action::ServerGoalHandle<RobotControl>;
-                        // // using RobotControl = consai_msgs::action::RobotControl;
-
-                        // // 角加速度のリミットを適用
-                        // let max_velocity_theta = max_velocity_theta_;
-                        // // 速度リミットを適用
-                        // // fn limit_world_velocity
-                        // world_velocity = world_velocity;
-                        // // 全ての目標値ベクトルが実数であることを確認する
-                        // if !world_velocity.x.is_finite() || !world_velocity.y.is_finite() || !world_velocity.theta.is_finite() {
-                        //     world_velocity = F32Position { x: 0.0, y: 0.0, theta: 0.0 };
-                        // }
-                        // // ワールド座標系でのxy速度をロボット座標系に変換して設定
-                        // // command_to_stm32.robot_command_type =  EnumOrUnknown(protos::aisaaccommand::RobotCommandCoordinateSystemType::Vector);
-                        // command_to_stm32.goal_pose_velocity.vx = ((current_position.theta as f32).cos() * world_velocity.x + (current_position.theta as f32).sin() * world_velocity.y) as i32;
-                        // command_to_stm32.goal_pose_velocity.vy = (-(current_position.theta as f32).sin() * world_velocity.x + (current_position.theta as f32).cos() * world_velocity.y) as i32;
-                        // command_to_stm32.goal_pose_velocity.omega = world_velocity.theta as i32;
-
-                        // dwa_last_update_time = current_time;
-                        // last_world_velocity = world_velocity;
-                        
-
-                        // 制御値を出力する
-                        // let serialized_data = serialize_spc(received_cmd.current_pos.unwrap(), received_cmd.move_vec.unwrap(), received_cmd.target_pos.unwrap(), received_cmd.kick.unwrap(), received_cmd.robot_command_coordinate_system_type.unwrap(), received_cmd.vision_data_valid);
-
-                        // let mut escaped_buf: Vec<u8> = vec![0x7Eu8];        // Start delimiter
-                        // escape_for_serial(serialized_data.len() as u8 + 1, &mut escaped_buf);    // Length
-                        // let mut check_sum = 0;
-                        // escape_for_serial(0b10100000, &mut escaped_buf);    // Data Type 5, 0
-                        // for x in serialized_data {
-                        //     check_sum = (check_sum as u16 + x as u16) as u8;
-                        //     escape_for_serial(x, &mut escaped_buf);
-                        // }
-                        // check_sum = 0xFFu8 - check_sum;
-                        // escape_for_serial(check_sum, &mut escaped_buf);     // Checksum
-                        // uart.write(&escaped_buf).expect("couldn't send uart");
-
-                        // DWA
-                        // let mut dwa_result = Position { x: 0 , y: 0 , theta: 0 };
-
-                        // unsafe {
-                        //     execDWA(robot_state.current_pos.x, robot_state.current_pos.y, robot_state.current_pos.theta, robot_state.current_vel.vx, robot_state.current_vel.vy, robot_state.current_vel.omega, &mut target_x, &mut target_y, target_theta, &mut mid_tx, &mut mid_ty, number_of_obstacles, obstacle_x.as_ptr(), obstacle_y.as_ptr(), obstacle_vx.as_ptr(), obstacle_vy.as_ptr(), prohibited_zone_ignore, false, &mut dwa_result_valid, &mut path_enable, &mut prohibited_zone_start, &mut vx_out, &mut vy_out, &mut omega_out, &mut ax_out, &mut ay_out);
-                        // }
- 
-                        // let mut target_pos = protos::aisaaccommand::Position::new();
-                        // target_pos.x = target_x;
-                        // target_pos.y = target_y;
-                        // target_pos.theta = target_theta;
-                        // let serialized_data = serialze_rpi(target_pos, dwa_result_valid, path_enable, dwa_result);
-
-                        // escaped_buf.clear();
-                        // escaped_buf[0] = 0x7Eu8;        // Start delimiter
-                        // escape_for_serial(serialized_data.len() as u8 + 1, &mut escaped_buf);    // Length
-                        // check_sum = 0;
-                        // escape_for_serial(0b10100001, &mut escaped_buf);    // Data Type 5, 1
-                        // for x in serialized_data {
-                        //     check_sum = (check_sum as u16 + x as u16) as u8;
-                        //     escape_for_serial(x, &mut escaped_buf);
-                        // }
-                        // check_sum = 0xFFu8 - check_sum;
-                        // escape_for_serial(check_sum, &mut escaped_buf);     // Checksum
-
-                        // uart.write(&escaped_buf).expect("couldn't send uart");
                     },
                     1 => {  // from SSL Vision
                         // Send to STM32
