@@ -265,6 +265,23 @@ fn main() -> std::io::Result<()> {
                 match sub_data_type {
                     0 => {  // from Strategy PC
                         let received_cmd = protos::aisaaccommand::SpcCommand::parse_from_bytes(&serealized).unwrap();
+                        // Pass-through
+                        // set data
+                        {
+                            let serialized_data = received_cmd.write_to_bytes().unwrap();
+                            let mut escaped_buf: Vec<u8> = vec![0x7Eu8];        // Start delimiter
+                            escape_for_serial(serialized_data.len() as u8 + 1, &mut escaped_buf);    // Length
+                            let mut check_sum = 0;
+                            escape_for_serial(0b10100000, &mut escaped_buf);    // Data Type 5, 0
+                            for x in serialized_data {
+                                check_sum = (check_sum as u16 + x as u16) as u8;
+                                escape_for_serial(x, &mut escaped_buf);
+                            }
+                            check_sum = 0xFFu8 - check_sum;
+                            escape_for_serial(check_sum, &mut escaped_buf);     // Checksum
+                            uart.write(&escaped_buf).expect("couldn't send uart");
+                        }
+                        
                         // Data
                         let coordinate_type = received_cmd.robot_command_type;
                         let goal_pose = State { x: received_cmd.goal_pose.x as f64, y: received_cmd.goal_pose.y as f64, theta: received_cmd.goal_pose.theta as f64 };
@@ -388,15 +405,23 @@ fn main() -> std::io::Result<()> {
                             }
                         }
 
-                        let _command_to_stm32 = protos::aisaaccommand::RaspiCommand::new();
-                        // dribble_power;
-                        // kick_power;
-
                         // ラズパイでの責務はここまで
                         // 制御値を出力する
-                        let dwa_data = protos::aisaaccommand::SpcCommand::new();
+                        let mut _command_to_stm32 = protos::aisaaccommand::RaspiCommand::new();
+                        // goal pose velocity;
+                        let mut _dwa_velocity = protos::aisaaccommand::Velocity::new();
+                        _dwa_velocity.vx = middle_goal_pose.x as i32;
+                        _dwa_velocity.vy = middle_goal_pose.y as i32;
+                        _command_to_stm32.goal_pose_velocity = protobuf::MessageField::some(_dwa_velocity);
+                        // dribble
+                        let mut _dwa_dribble = protos::aisaaccommand::Dribble::new();
+                        _command_to_stm32.dribble = protobuf::MessageField::some(_dwa_dribble);
+                        // kick
+                        let mut _dwa_kick = protos::aisaaccommand::Kick::new();
+                        _command_to_stm32.kick = protobuf::MessageField::some(_dwa_kick);
+
                         // set data
-                        let serialized_data = dwa_data.write_to_bytes().unwrap();
+                        let serialized_data = _command_to_stm32.write_to_bytes().unwrap();
                         let mut escaped_buf: Vec<u8> = vec![0x7Eu8];        // Start delimiter
                         escape_for_serial(serialized_data.len() as u8 + 1, &mut escaped_buf);    // Length
                         let mut check_sum = 0;
