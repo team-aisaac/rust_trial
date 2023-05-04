@@ -283,13 +283,10 @@ fn main() -> std::io::Result<()> {
                         }
                         
                         // Data
-                        let coordinate_type = received_cmd.robot_command_type;
                         let goal_pose = State { x: received_cmd.goal_pose.x as f64, y: received_cmd.goal_pose.y as f64, theta: received_cmd.goal_pose.theta as f64 };
                         let prohibited_zone_ignore = received_cmd.prohibited_zone_ignore;
                         let mut middle_target_flag = received_cmd.middle_target_flag;
                         let mut middle_goal_pose = State { x: received_cmd.middle_goal_pose.x as f64, y: received_cmd.middle_goal_pose.y as f64, theta: received_cmd.middle_goal_pose.theta as f64 };
-                        let dribble_msg = received_cmd.dribble;
-                        let kick = received_cmd.kick;
                         // https://doc.rust-lang.org/nomicon/ffi.html#creating-a-safe-interface
                         
                         let mut next_goal_pose = State { x: 0.0, y: 0.0, theta: 0.0 };
@@ -298,7 +295,6 @@ fn main() -> std::io::Result<()> {
                         let mut dribble_con_flag:Vec<bool> = Vec::new();
                         let mut dribble_ball_move_flag:Vec<bool> = Vec::new();
                         let mut dribble_power = 0.0;
-                        let mut kick_power = 0;
 
                         // Pass-through
                         let mut ball_kick_con_flag: Vec<bool> = Vec::new();
@@ -313,85 +309,6 @@ fn main() -> std::io::Result<()> {
                         // - ball info
                         // - my robot info
                         // - obstacles info
-
-                        if kick.ball_kick_active {  // ボールを蹴るための位置移動を行うかを判定(戦略PCから送信)
-                            // ボールセンサに反応するかを判定(ロボットに実装する場合はボールセンサでボールの位置が取れるかで判定する)
-                            if ((-0.06 <= robot_oriented_ball_position.y && robot_oriented_ball_position.y <= 0.06) && (0.08 <= robot_oriented_ball_position.x && robot_oriented_ball_position.x <= 0.13)) || ball_kick_con_flag[0] {
-                                trape_control_flag[0] = false; // DWAの台形制御のフラグ
-                                // ボールセンサに反応だないときはカメラの情報、ボールセンサが反応しているときはその値を使用する
-                                let mut ball_kick_con = false;  // ボールを蹴る動作を実行するかを判定するフラグ
-                                let mut _wrap_kick_con = false;
-                                let mut wrap_kick_xy_flag = false;
-                                let mut dribble_active = false;
-                                let ball_kick = false;
-
-                                // fn robot_wrap_kick
-                                unsafe {
-                                    robot_wrap_kick(&mut next_goal_pose, ball, r_ball, ball_goal, my_robot, &mut circumferential_error, &mut radius_error, &mut goal_theta, ball_kick_con_flag.as_mut_ptr(), robot_id, &mut kick_con_max_velocity_theta, free_kick_flag, ball_target_allowable_error, ball_kick, &mut ball_kick_con, &mut ob_unit_vec_circumferential_x, &mut ob_unit_vec_circumferential_y, &mut ob_unit_vec_radius_x, &mut ob_unit_vec_radius_y, &mut wrap_kick_xy_flag, &mut dribble_active);
-                                }
-
-                                if dribble_active {
-                                    dribble_power = 0.1;
-                                } else {
-                                    dribble_power = 0.0;
-                                }
-
-                                // Pack in cmd
-                                if wrap_kick_xy_flag {
-                                    ball_wrap_pid = false;
-                                    position_pid = true;
-                                } else {
-                                    ball_wrap_pid = true;
-                                    position_pid = false;
-                                }
-
-                                if ball_kick_con {   // ボールを蹴る処理を実行
-                                    kick_power = kick.kick_power;
-                                }
-
-                                next_goal_pose.theta = goal_pose.theta as f64;
-                            }
-                        } else {
-                            ball_kick_con_flag[0] = false;
-                        }
-
-                        if dribble_msg.dribble_state {
-                            // ボールセンサに反応するかを判定(ロボットに実装する場合はボールセンサでボールの位置が取れるかで判定する)
-                            if ((-0.06 <= robot_oriented_ball_position.y && robot_oriented_ball_position.y <= 0.06) && (0.08 <= robot_oriented_ball_position.x && robot_oriented_ball_position.x <= 0.13)) || ball_kick_con_flag[0] {
-                                trape_control_flag[0] = true;
-                                let mut dribble_active = true;
-
-                                let mut dribble_goal = State { x: 0.0, y: 0.0, theta: 0.0 };
-                                let dribble_complete_distance:i32 = 0;
-                                let mut dribble_trape_c:Vec<MiconTrapeCon> = Vec::new();
-
-                                // fn dribble
-                                unsafe {
-                                    dribble(dribble_goal, ball, r_ball, my_robot, &mut next_goal_pose, dribble_con_flag.as_mut_ptr(), robot_id, dribble_complete_distance, dribble_trape_c.as_mut_ptr(), dribble_ball_move_flag.as_mut_ptr(), &mut circumferential_error, &mut radius_error, &mut ob_unit_vec_circumferential_x, &mut ob_unit_vec_circumferential_y, &mut ob_unit_vec_radius_x, &mut ob_unit_vec_radius_y, &mut dribble_active);
-                                }
-
-                                if dribble_active {
-                                    dribble_power = 0.1;
-                                } else {
-                                    dribble_power = 0.0;
-                                }
-                                // command_to_stm32.dribble.dribble_power = dribble_power;
-
-                                if dribble_ball_move_flag[0] {
-                                    ball_wrap_pid = false;
-                                    position_pid = true;
-                                } else {
-                                    ball_wrap_pid = true;
-                                    position_pid = false;
-                                }
-                            } else {
-                                dribble_con_flag[0] = false;
-                                dribble_ball_move_flag[0] = false;
-                            }
-                        } else {
-                            dribble_con_flag[0] = false;
-                            dribble_ball_move_flag[0] = false;
-                        }
 
                         if ball_kick_con_flag[0] == false || dribble_con_flag[0] == false {
                             dribble_ball_move_flag[0] = false;
