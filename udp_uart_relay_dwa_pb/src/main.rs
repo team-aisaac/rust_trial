@@ -2,7 +2,6 @@ use std::net::UdpSocket;
 use std::path::Path;
 use std::env;
 use std::io;
-use std::time::Instant;
 use rppal::uart::{Parity, Uart};
 use protobuf::Message;
 
@@ -89,48 +88,6 @@ struct MiconTrapeCon {
 }
 
 extern "C" {
-    fn robot_wrap_kick(
-        next_goal_pose: * mut State,
-        ball: TrackedBall,
-        r_ball: State,
-        ball_goal: State,
-        my_robot: TrackedRobot,
-        circumferential_error: * mut f64,
-        radius_error: * mut f64,
-        goal_theta: * mut f64,
-        ball_kick_con_flag: * mut bool,
-        robot_id: u32,
-        kick_con_max_velocity_theta: * mut f32,
-        free_kick_flag: bool,
-        ball_target_allowable_error: i32,
-        ball_kick: bool,
-        ball_kick_con: * mut bool,
-        ob_unit_vec_circumferential_x: * mut f32,
-        ob_unit_vec_circumferential_y: * mut f32,
-        ob_unit_vec_radius_x: * mut f32,
-        ob_unit_vec_radius_y: * mut f32,
-        wrap_kick_xy_flag: * mut bool,
-        dribble_active: * mut bool);
-
-    fn dribble(
-        dribble_goal: State,
-        ball: TrackedBall,
-        r_ball: State,
-        my_robot: TrackedRobot,
-        next_goal_pose: * mut State,
-        dribble_con_flag: * mut bool,
-        robot_id: u32,
-        dribble_complete_distance: i32,
-        dribble_trape_c: * mut MiconTrapeCon,
-        dribble_ball_move_flag: * const bool,
-        circumferential_error: * mut f64,
-        radius_error: * mut f64,
-        ob_unit_vec_circumferential_x: * mut f32,
-        ob_unit_vec_circumferential_y: * mut f32,
-        ob_unit_vec_radius_x: * mut f32,
-        ob_unit_vec_radius_y: * mut f32,
-        dribble_active: * mut bool);
-
     fn decide_next_goal_xy(
         goal_pose: State,
         middle_goal_pose: * mut State,
