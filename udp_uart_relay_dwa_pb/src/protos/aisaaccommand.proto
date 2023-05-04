@@ -40,8 +40,8 @@ message Kick {
     Straight = 1;
   }
 
-  KickType sensor_type = 1; // ball kick state
-  KickMethod kick_method = 2; // ball kick 
+  bool ball_kick_state = 1;
+  bool ball_kick = 2;
   int32 kick_power = 3;
   bool ball_kick_active = 4;
   bool free_kick_flag = 5;
@@ -73,6 +73,7 @@ message SpcCommand {
   Position middle_goal_pose = 5;
   Dribble dribble = 6;
   Kick kick = 7;
+  bool halt_flag = 8;
 }
 
 // DWA Result
