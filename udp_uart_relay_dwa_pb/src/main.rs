@@ -281,19 +281,14 @@ fn main() -> std::io::Result<()> {
 
                         // ラズパイでの責務はここまで
                         // 制御値を出力する
-                        let mut _command_to_stm32 = protos::aisaaccommand::RaspiCommand::new();
-                        // goal pose velocity;
-                        let mut _dwa_velocity = protos::aisaaccommand::Velocity::new();
-                        _dwa_velocity.vx = middle_goal_pose.x as i32;
-                        _dwa_velocity.vy = middle_goal_pose.y as i32;
-                        _command_to_stm32.goal_pose_velocity = protobuf::MessageField::some(_dwa_velocity);
-                        // dribble
-                        let mut _dwa_dribble = protos::aisaaccommand::Dribble::new();
-                        _command_to_stm32.dribble = protobuf::MessageField::some(_dwa_dribble);
-                        // kick
-                        let mut _dwa_kick = protos::aisaaccommand::Kick::new();
-                        _command_to_stm32.kick = protobuf::MessageField::some(_dwa_kick);
-
+                        let mut _command_to_stm32 = protos::aisaaccommand::DWAResult::new();
+                        // goal position
+                        let mut _dwa_goal_position = protos::aisaaccommand::Position::new();
+                        _dwa_goal_position.x = middle_goal_pose.x as i32;
+                        _dwa_goal_position.y = middle_goal_pose.y as i32;
+                        _dwa_goal_position.theta = middle_goal_pose.theta as i32;
+                        _command_to_stm32.dwa_position = protobuf::MessageField::some(_dwa_goal_position);
+                        
                         // set data
                         let serialized_data = _command_to_stm32.write_to_bytes().unwrap();
                         let mut escaped_buf: Vec<u8> = vec![0x7Eu8];        // Start delimiter

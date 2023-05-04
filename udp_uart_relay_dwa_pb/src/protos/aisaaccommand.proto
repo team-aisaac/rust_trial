@@ -78,11 +78,8 @@ message SpcCommand {
 
 // DWA Result
 // RasPi -> STM32
-message RaspiCommand {
-  RobotCommandCoordinateSystemType robot_command_type = 1;
-  Velocity goal_pose_velocity = 2;
-  Dribble dribble = 3;
-  Kick kick = 4;
+message DWAResult {
+  Position dwa_position = 1;
 }
 
 // Vision Data
