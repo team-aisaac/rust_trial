@@ -272,7 +272,7 @@ fn main() -> std::io::Result<()> {
                             let mut escaped_buf: Vec<u8> = vec![0x7Eu8];        // Start delimiter
                             escape_for_serial(serialized_data.len() as u8 + 1, &mut escaped_buf);    // Length
                             let mut check_sum = 0;
-                            escape_for_serial(0b10100000, &mut escaped_buf);    // Data Type 5, 0
+                            escape_for_serial(0b10100001, &mut escaped_buf);    // Data Type 5, 1
                             for x in serialized_data {
                                 check_sum = (check_sum as u16 + x as u16) as u8;
                                 escape_for_serial(x, &mut escaped_buf);
@@ -357,7 +357,7 @@ fn main() -> std::io::Result<()> {
                         let mut escaped_buf: Vec<u8> = vec![0x7Eu8];    // Start delimiter
                         escape_for_serial( serealized.len() as u8, &mut escaped_buf );    // Length
                         let mut check_sum = 0;
-                        escape_for_serial( 0b10100001, &mut escaped_buf );  // Data Type: 5, 1
+                        escape_for_serial( 0b10100010, &mut escaped_buf );  // Data Type: 5, 2
                         // https://zenn.dev/toga/books/rust-atcoder-old/viewer/21-slice#for-%E5%BC%8F
                         for x in &serealized[..] {
                             check_sum = ( check_sum as u16 + *x as u16 ) as u8;
