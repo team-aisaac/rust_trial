@@ -249,12 +249,11 @@ fn main() -> std::io::Result<()> {
                         let mut next_goal_pose = State { x: 0.0, y: 0.0, theta: 0.0 };
                         let mut ball_wrap_pid = false;
                         let mut position_pid = false;
-                        let mut dribble_con_flag:Vec<bool> = Vec::new();
+                        let mut _dribble_con_flag = false;
                         let mut dribble_ball_move_flag:Vec<bool> = Vec::new();
                         let mut dribble_power = 0.0;
 
                         // Pass-through
-                        let mut ball_kick_con_flag: Vec<bool> = Vec::new();
 
                         // Receive from Strategy PC
                         // - goal: https://github.com/SSL-Roots/consai_ros2/blob/b5256af08073560abad72e4371d8e2e2619b56ad/consai_msgs/action/RobotControl.action
@@ -267,16 +266,11 @@ fn main() -> std::io::Result<()> {
                         // - my robot info
                         // - obstacles info
 
-                        if ball_kick_con_flag[0] == false || dribble_con_flag[0] == false {
-                            dribble_ball_move_flag[0] = false;
-                            ball_wrap_pid = false;
-                            position_pid = true;
-                            dribble_power = 0.0;
-                            // 算出された目標点まで移動するために、次のループまでの目標点を決定する
-                            // fn decide_next_goal_xy
-                            unsafe {
-                                decide_next_goal_xy(goal_pose, &mut middle_goal_pose, &mut next_goal_pose, prohibited_zone_ignore, &mut  middle_target_flag, robot_id, my_robot, team_is_yellow, trape_control_flag.as_mut_ptr(), trape_c.as_mut_ptr());
-                            }
+
+                        // 算出された目標点まで移動するために、次のループまでの目標点を決定する
+                        // fn decide_next_goal_xy
+                        unsafe {
+                            decide_next_goal_xy(goal_pose, &mut middle_goal_pose, &mut next_goal_pose, prohibited_zone_ignore, &mut  middle_target_flag, robot_id, my_robot, team_is_yellow, trape_control_flag.as_mut_ptr(), trape_c.as_mut_ptr());
                         }
 
                         // ラズパイでの責務はここまで
