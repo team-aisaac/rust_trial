@@ -374,7 +374,7 @@ fn main() -> std::io::Result<()> {
         if Instant::now() > next_dwa_time {
             next_dwa_time = next_dwa_time + dwa_duration;
 
-            let mut next_goal_pose = State { x: 0.0, y: 0.0, theta: 0.0 };
+            let mut next_goal_pose = State { x: 0.0, y: 0.0, theta: 0.0 };  // m
             let mut _dribble_con_flag = false;
 
             // Receive from Strategy PC
@@ -390,12 +390,12 @@ fn main() -> std::io::Result<()> {
 
             let mut _middle_target_flag = false;
             {
-                _dwa_robot.target_x = (goal_pose.x * 1000.0) as i32;   // mm
-                _dwa_robot.target_y = (goal_pose.y * 1000.0) as i32;   // mm
+                _dwa_robot.target_x = goal_pose.x as i32;   // mm
+                _dwa_robot.target_y = goal_pose.y as i32;   // mm
                 _dwa_robot.target_theta = (goal_pose.theta * 18000.0 / OtherPI) as i32;
-                _dwa_robot.middle_target_x = (middle_goal_pose.x * 1000.0) as i32;
-                _dwa_robot.middle_target_y = (middle_goal_pose.y * 1000.0) as i32;
-                let _robot_virtual_goal_distance = ((_dwa_robot.x - current_position.x * 1000) as f64).hypot((_dwa_robot.y - current_position.y * 1000) as f64);
+                _dwa_robot.middle_target_x = middle_goal_pose.x as i32;
+                _dwa_robot.middle_target_y = middle_goal_pose.y as i32;
+                let _robot_virtual_goal_distance = ((_dwa_robot.x - current_position.x) as f64).hypot((_dwa_robot.y - current_position.y) as f64);
 
                 if ROBOT_POSITION_RESET_DISTANCE < _robot_virtual_goal_distance {
                     _dwa_robot.x = current_position.x;
@@ -486,8 +486,8 @@ fn main() -> std::io::Result<()> {
             let mut _command_to_stm32 = protos::aisaaccommand::DWAResult::new();
             // goal position
             let mut _dwa_goal_position = protos::aisaaccommand::Position::new();
-            _dwa_goal_position.x = next_goal_pose.x as i32 * 1000;  // mm
-            _dwa_goal_position.y = next_goal_pose.y as i32 * 1000;  // mm
+            _dwa_goal_position.x = next_goal_pose.x * 1000.0 as i32;  // mm
+            _dwa_goal_position.y = next_goal_pose.y * 1000.0 as i32;  // mm
             // _dwa_goal_position.theta = next_goal_pose.theta as i32;
             _command_to_stm32.dwa_position = protobuf::MessageField::some(_dwa_goal_position);
 
