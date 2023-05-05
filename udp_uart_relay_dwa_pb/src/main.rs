@@ -298,8 +298,8 @@ fn main() -> std::io::Result<()> {
                             obstacles_position.push(Position { x: obstacle.x, y: obstacle.y, theta: obstacle.theta });
                             _obs_x[_number_of_obstacles] = obstacle.x;   // mm
                             _obs_y[_number_of_obstacles] = obstacle.y;   // mm
-                            _obs_v_x[_number_of_obstacles] = obstacle.theta; // mm/s
-                            _obs_v_y[_number_of_obstacles] = 0; // mm/s
+                            _obs_v_x[_number_of_obstacles] = obstacle.vx; // mm/s
+                            _obs_v_y[_number_of_obstacles] = obstacle.vy; // mm/s
                             _obs_a_x[_number_of_obstacles] = 0; // mm/s^2
                             _obs_a_y[_number_of_obstacles] = 0; // mm/s^2
                             _number_of_obstacles = _number_of_obstacles + 1;
