@@ -200,28 +200,6 @@ fn main() -> std::io::Result<()> {
     // Variables for DWA
     let mut current_position = Position { x: 0, y: 0, theta: 0 };
 
-    // let mut r_ball = State { x: 0.0, y: 0.0, theta: 0.0 };
-    // let mut ball_goal = State { x: 0.0, y: 0.0, theta: 0.0 };
-    // let robot_id:u32 = 0;
-    // let my_robot_team_color = 1;    // Yellow
-    // let mut my_robot = TrackedRobot { robot_id: RobotId { id: robot_id, team_color: my_robot_team_color }, pos: Vector2 { x: 0.0, y: 0.0 }, orientation: 0.0, vel: Vector2 { x: 0.0, y: 0.0 }, vel_angular: 0.0, visibility: 0.0 };
-
-    // for fn robot_wrap_kick
-    // let mut circumferential_error: f64 = 0.0;
-    // let mut radius_error:f64 = 0.0;
-    // let mut goal_theta:f64 = 0.0;
-    // let mut kick_con_max_velocity_theta:f32 = 0.0;
-    // let mut free_kick_flag = false;
-    // let mut ball_target_allowable_error: i32 = 0;
-    // let mut ob_unit_vec_circumferential_x: f32 = 0.0;
-    // let mut ob_unit_vec_circumferential_y: f32 = 0.0;
-    // let mut ob_unit_vec_radius_x: f32 = 0.0;
-    // let mut ob_unit_vec_radius_y: f32 = 0.0;
-
-    // let dribble_complete_distance = 0;
-    // let team_is_yellow = true;
-
-
     // DWA：保持する変数
     let mut _dwa_robot: DwaRobotPath = DwaRobotPath { x: 0, y: 0, theta: 0, v_x: 0, v_y: 0, omega: 0, target_x: 0, target_y: 0, target_theta: 0, middle_target_x: 0, middle_target_y: 0 };
     let mut _trape_control_flag = false;
@@ -276,11 +254,7 @@ fn main() -> std::io::Result<()> {
                         // https://doc.rust-lang.org/nomicon/ffi.html#creating-a-safe-interface
                         
                         let mut next_goal_pose = State { x: 0.0, y: 0.0, theta: 0.0 };
-                        // let mut ball_wrap_pid = false;
-                        // let mut position_pid = false;
                         let mut _dribble_con_flag = false;
-                        // let mut dribble_ball_move_flag:Vec<bool> = Vec::new();
-                        // let mut dribble_power = 0.0;
 
                         // Pass-through
 
@@ -396,7 +370,6 @@ fn main() -> std::io::Result<()> {
                                 }
                                 // ロボットの位置と仮想目標値に大きなズレが発生した場合に補正する
                                 unsafe {
-                                    // fn micon_trapezoidal_robotXY_vertualXY_distance_check
                                     micon_trapezoidal_robotXY_vertualXY_distance_check(&mut _trape_c, _dwa_robot.x, _dwa_robot.y);
                                 }
                                 _dwa_robot.x = _trape_c.virtual_x as i32;
