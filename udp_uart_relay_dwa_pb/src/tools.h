@@ -21,7 +21,7 @@
 #define FIELD_Y_B 6600
 #define FIELD_OUT_LINE 300  //フィールドの外白線と壁までの距離
 
-#define ROBOT_MAX_VEL 2000  //ロボットの最大速度(mm/s)
+#define ROBOT_MAX_VEL 1200  //ロボットの最大速度(mm/s)
 #define ROBOT_MAX_ACCEL 2000 //ロボットの最大速度(mm/s^2)
 #define ROBOT_MAX_JARK 10000 //ロボットの最大躍度(mm/s^3)
 #define ROBOT_DRIBBLE_MAX_ACCEL 300 //ドリブル時の最大加速度

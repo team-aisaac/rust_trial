@@ -211,7 +211,7 @@ fn main() -> std::io::Result<()> {
     const DWA_ROBOTXY_VIRTUALXY_DISTANCE_CHECK: f64 = 500.0;    // DWA中に仮の目標値とロボットの位置が離れられる最大値
     const RASPI_TIME_STEP: f64 = 0.01;  // 100Hz
     const MICON_TIME_STEP: f64 = 0.001; // 1000Hz
-    const ROBOT_MAX_VEL: f32 = 2000.0;  // ロボットの最大速度(mm/s)
+    const ROBOT_MAX_VEL: f32 = 1200.0;  // ロボットの最大速度(mm/s)
 
     // SSL Vision Data
     let mut robot_oriented_ball_position = F32Position { x: 0.0, y: 0.0, theta: 0.0 };
