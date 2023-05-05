@@ -16,13 +16,9 @@ fn main() {
         .file("src/dwa2.c")
         .file("src/RaspiTrapezoidalControl.c")
         .file("src/Target_abjust.c")
-        .file("src/dribble.c")
         .file("src/DWA_path_recover.c")
-        .file("src/micon_wrap_kick.c")
         .file("src/tools.c")
         .file("src/TrapezoidalControl.c")
-        .file("src/wrap_kick.c")
-        .file("src/controller_component.c")
         .compile("dwa");
     // FFI
     let project_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
