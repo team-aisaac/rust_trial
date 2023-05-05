@@ -270,10 +270,10 @@ fn main() -> std::io::Result<()> {
                         // - obstacles info
                         const ROBOT_POSITION_RESET_DISTANCE: f64 = 700.0;
                         const ROBOT_NUM: i32 = 16;
-                        const DWA_ROBOTXY_VIRTUALXY_DISTANCE_CHECK: f64 = 99999.9;
-                        const RASPI_TIME_STEP: i32 = 99999;
-                        const MICON_TIME_STEP: i32 = 999;
-                        const ROBOT_MAX_VEL: f32 = 9999999.9;
+                        const DWA_ROBOTXY_VIRTUALXY_DISTANCE_CHECK: f64 = 500.0;    // DWA中に仮の目標値とロボットの位置が離れられる最大値
+                        const RASPI_TIME_STEP: f64 = 0.01;  // 100Hz
+                        const MICON_TIME_STEP: f64 = 0.001; // 1000Hz
+                        const ROBOT_MAX_VEL: f32 = 2000.0;  // ロボットの最大速度(mm/s)
 
                         let mut _middle_target_flag = false;
                         {
@@ -334,7 +334,7 @@ fn main() -> std::io::Result<()> {
 
                             if _is_dwa_enable == true && _path_enable == true {
                                 // DWAを行う
-                                for i in 0..(RASPI_TIME_STEP/MICON_TIME_STEP) {
+                                for i in 0..(RASPI_TIME_STEP/MICON_TIME_STEP) as i32 {
                                     unsafe {
                                         DWA_path_recover(&mut _next_goal_pose_x, &mut _next_goal_pose_y, &mut _robot_virtual_vel_x, &mut _robot_virtual_vel_y,
                                             _output_a_x as f32, _output_a_y as f32, ROBOT_MAX_VEL);
@@ -363,7 +363,7 @@ fn main() -> std::io::Result<()> {
                                         _is_dwa_enable, _path_enable);
                                 }
                                 // 台形制御を行う
-                                for i in 0..(RASPI_TIME_STEP/MICON_TIME_STEP) {
+                                for i in 0..(RASPI_TIME_STEP/MICON_TIME_STEP) as i32 {
                                     unsafe {
                                         micon_trapezoidal_control(_dwa_robot.target_x, _dwa_robot.target_y, &mut _trape_c);
                                     }
